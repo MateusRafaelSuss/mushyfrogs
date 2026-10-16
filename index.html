@@ -248,9 +248,9 @@ const levels = [
 // Corações de cura: recuperam uma vida perdida, até o limite de 3.
 // As posições ficam em superfícies acessíveis e relativamente seguras de cada fase.
 const HEALING_SPAWNS = [
-  [[1660,415]], // Bosque Saltitante — próximo ao checkpoint
-  [[1635,430]], // Caverna Cristalina
-  [[2480,275]], // Arquipélago das Nuvens — plataforma alta
+  [[1850,415]], // Bosque Saltitante — plataforma larga, separado do checkpoint
+  [[1815,430]], // Caverna Cristalina — distante do checkpoint e do inimigo
+  [[2710,435]], // Arquipélago das Nuvens — chão seguro após o checkpoint alto
   [[1000,450]], // Pântano Corrompido
   [[1598,440]], // Ruínas Ancestrais
   [[1800,440]], // Mina Fulgurante
@@ -259,14 +259,33 @@ const HEALING_SPAWNS = [
   [[2010,445]], // Picos de Cristal
   [[580,445]]   // Coração do Pântano — antes do chefe
 ];
-levels.forEach((lv, i) => { lv.healingItems = (HEALING_SPAWNS[i] || []).map(([x,y]) => healingHeart(x,y)); });
+// Não permita que uma futura alteração de mapa coloque um coração em cima de um checkpoint.
+// Se um ponto ficar dentro da zona visual do marcador, tenta posições alternativas na mesma altura.
+function createSeparatedHealingItems(spawns, checkpoints, worldW) {
+  const used = [];
+  return spawns.map(([sourceX, sourceY], index) => {
+    const blocked = (x, y) => (checkpoints || []).some(cp => Math.abs(x-cp.x) < 105 && Math.abs(y-cp.y) < 62)
+      || used.some(h => Math.abs(x-h.x) < 58 && Math.abs(y-h.y) < 38);
+    let x = sourceX, y = sourceY;
+    if (blocked(x,y)) {
+      const offsets = [140,-140,210,-210,280,-280,350,-350,420,-420];
+      const candidate = offsets.map(dx => ({x:clamp(sourceX+dx,24,worldW-24),y:sourceY}))
+        .find(pos => !blocked(pos.x,pos.y));
+      if (candidate) { x=candidate.x; y=candidate.y; }
+    }
+    const item = healingHeart(x,y); item.id=index;
+    used.push(item);
+    return item;
+  });
+}
+levels.forEach((lv, i) => { lv.healingItems = createSeparatedHealingItems(HEALING_SPAWNS[i] || [], lv.checkpoints, lv.worldW); });
 
 const sublevelTemplates = {
   'mushroom-grotto': {
     name:'Gruta dos Cogumelos', theme:'cave', musicTrack:'sub-grotto', worldW:1120, spawn:{x:130,y:431}, exitX:35, exitFloorY:460,
     platforms:[plat(0,460,1120,80,'ground'),plat(190,390,105),plat(355,335,100),plat(520,385,100,18,'bounce'),plat(680,330,105),plat(850,380,105),plat(970,315,100)],
     coins:[coin(220,355),coin(385,300),coin(550,345),coin(710,295),coin(880,345),coin(1000,280),coin(1065,420)],
-    healingItems:[healingHeart(565,430)],
+    healingItems:[healingHeart(900,430)],
     hazards:[{x:300,y:438,w:34,h:22},{x:760,y:438,w:40,h:22}], enemies:[enemy(430,437,400,490,65)],
     checkpoints:[{x:675,y:460}], decorations:[{x:130,y:445,type:'crystal'},{x:605,y:445,type:'crystal'}]
   },
@@ -274,14 +293,14 @@ const sublevelTemplates = {
     name:'Cofre Cristalino', theme:'ruins', musicTrack:'sub-vault', worldW:980, spawn:{x:130,y:431}, exitX:35, exitFloorY:460,
     platforms:[plat(0,460,980,80,'ground'),plat(190,385,95),plat(330,325,95,18,'moving',{moveY:20,speed:1.4,phase:1}),plat(485,375,95,18,'crumble'),plat(635,315,95),plat(790,370,95,18,'bounce')],
     coins:[coin(215,350),coin(355,285),coin(510,335),coin(660,275),coin(815,330),coin(900,420),coin(940,420)],
-    healingItems:[healingHeart(570,430)],
+    healingItems:[healingHeart(850,430)],
     hazards:[{x:405,y:438,w:28,h:22},{x:710,y:438,w:32,h:22}], enemies:[], checkpoints:[{x:625,y:460}], decorations:[{x:105,y:445,type:'crystal'},{x:930,y:445,type:'crystal'}]
   },
   'root-chamber': {
     name:'Câmara das Raízes', theme:'heart', musicTrack:'sub-roots', worldW:1040, spawn:{x:130,y:431}, exitX:35, exitFloorY:460,
     platforms:[plat(0,460,1040,80,'ground'),plat(180,395,100),plat(320,335,95),plat(470,380,100),plat(625,320,95,18,'moving',{moveX:24,speed:1.2,phase:1}),plat(790,370,100),plat(900,310,95)],
     coins:[coin(205,360),coin(345,295),coin(495,340),coin(650,280),coin(815,330),coin(925,270),coin(990,420)],
-    healingItems:[healingHeart(570,430)],
+    healingItems:[healingHeart(445,430)],
     hazards:[{x:380,y:438,w:30,h:22},{x:715,y:438,w:35,h:22}], enemies:[enemy(820,437,790,865,70)],
     checkpoints:[{x:610,y:460}], decorations:[{x:110,y:445,type:'flower'},{x:960,y:445,type:'crystal'}]
   }
@@ -290,7 +309,7 @@ function cloneSublevel(roomId) {
   const src=sublevelTemplates[roomId] || sublevelTemplates['mushroom-grotto'];
   return {...src,isSublevel:true,roomId,sublevelExitX:src.exitX,exitFloorY:src.exitFloorY,pipes:[],goalX:src.worldW-40,
     platforms:src.platforms.map(p=>({...p,baseX:p.x,baseY:p.y,prevX:p.x,prevY:p.y,hidden:false,triggered:false,crumbleTimer:0,respawnTimer:0})),
-    coins:src.coins.map((c,i)=>({...c,taken:false,id:i})),healingItems:(src.healingItems||[]).map((h,i)=>({...h,taken:false,id:i})),hazards:src.hazards.map(h=>({...h})),enemies:src.enemies.map(e=>({...e})),
+    coins:src.coins.map((c,i)=>({...c,taken:false,id:i})),healingItems:createSeparatedHealingItems((src.healingItems||[]).map(h=>[h.x,h.y]),src.checkpoints,src.worldW),hazards:src.hazards.map(h=>({...h})),enemies:src.enemies.map(e=>({...e})),
     checkpoints:src.checkpoints.map(c=>({...c,used:false})),decorations:src.decorations.map(d=>({...d})),boss:null};
 }
 let sublevelReturn = null, sublevelCache = {}, pipeTransition = null;
@@ -491,6 +510,27 @@ function respawn() {
   particles.push(...burst(player.x+player.w/2,player.y+player.h/2,'#ff7d83',16)); playSfx('hurt');
   if(lives<=0) { state='gameover'; playSfx('gameover'); }
 }
+function activateReachedCheckpoints() {
+  if (!level || !player || !player.onGround || !player.groundPlatform) return;
+  const supportNow = player.groundPlatform;
+  // A checkpoint is valid only when its marker stands on a real platform, and the frog
+  // has actually landed on that same surface (not merely jumped past it in mid-air).
+  for (const cp of (level.checkpoints || [])) {
+    if (cp.used) continue;
+    const support = level.platforms.find(p => !p.hidden &&
+      cp.x >= p.x + player.w/2 && cp.x <= p.x + p.w - player.w/2 &&
+      Math.abs(p.y - cp.y) <= 6);
+    if (!support || supportNow !== support) continue;
+    if (Math.abs((player.x + player.w/2) - cp.x) >= 34) continue;
+    if (Math.abs((player.y + player.h) - support.y) > 3) continue;
+    cp.used = true;
+    checkpointX = cp.x - player.w/2;
+    checkpointY = support.y - player.h;
+    addText(cp.x, support.y - 42, 'CHECKPOINT!', '#c5ffcd');
+    particles.push(...burst(cp.x, support.y - 20, '#8fffb5', 18));
+    playSfx('checkpoint');
+  }
+}
 function recordLevelComplete() {
   if(completionRecorded) return; completionRecorded=true;
   if(!progress.completedLevels.includes(levelIndex)) progress.completedLevels.push(levelIndex);
@@ -582,6 +622,9 @@ function update(dt) {
       player.y=p.y+p.h; player.vy=35;
     }
   }
+  // Register a reached checkpoint before hazards/enemies are processed. This prevents
+  // a same-frame hit from cancelling the checkpoint activation.
+  activateReachedCheckpoints();
   if(player.y>H+120) { respawn(); return; }
 
   // Collectibles.
@@ -599,21 +642,6 @@ function update(dt) {
   // Hazards and patrol enemies.
   for(const h of level.hazards){if(rects(player,{x:h.x+4,y:h.y+5,w:h.w-8,h:h.h-4})&&invincible<=0){respawn();return;}}
   for(const e of level.enemies){e.x+=e.speed*e.dir*dt;if(e.x<e.minX){e.x=e.minX;e.dir=1;}if(e.x+e.w>e.maxX){e.x=e.maxX-e.w;e.dir=-1;}if(!e.defeated&&rects(player,e)&&invincible<=0){if(oldY+player.h<=e.y+9){e.defeated=true;player.y=e.y-player.h;player.vy=-430;player.jumpsUsed=1;score+=25;particles.push(...burst(e.x+e.w/2,e.y,'#b7ffbd',15));addText(e.x+e.w/2,e.y-8,'+25','#c4ffb8');playSfx('stomp');}else{respawn();return;}}} level.enemies=level.enemies.filter(e=>!e.defeated);
-  // Checkpoints: only activate markers with a real platform directly underneath.
-  // This prevents a checkpoint from ever saving a respawn point over a gap/void.
-  for(const cp of level.checkpoints){
-    const support = level.platforms.find(p =>
-      cp.x >= p.x + player.w/2 && cp.x <= p.x + p.w - player.w/2 && Math.abs(p.y-cp.y) <= 6
-    );
-    if(!support) continue;
-    if(!cp.used && Math.abs((player.x+player.w/2)-cp.x)<28 && player.y+player.h>support.y-50){
-      cp.used=true;
-      checkpointX=cp.x-player.w/2;
-      checkpointY=support.y-player.h;
-      addText(cp.x,support.y-42,'CHECKPOINT!','#c5ffcd');
-      particles.push(...burst(cp.x,support.y-20,'#8fffb5',18)); playSfx('checkpoint');
-    }
-  }
   // Chefes patrulham a arena; pular sobre a cabeça causa dano e projéteis podem ser evitados pulando.
   if(level.boss && level.boss.hp>0) {
     const b=level.boss; b.x+=b.speed*b.dir*dt; if(b.x<b.minX){b.x=b.minX;b.dir=1;} if(b.x+b.w>b.maxX){b.x=b.maxX-b.w;b.dir=-1;}
