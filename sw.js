@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mushyfrog-v2';
+const CACHE_NAME = 'mushyfrog-v6';
 const APP_SHELL = [
   './',
   './index.html',
