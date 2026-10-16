@@ -122,6 +122,7 @@ const themes = {
 function plat(x,y,w,h=20,kind='normal',extra={}) { return {x,y,w,h,kind,baseX:x,baseY:y,prevX:x,prevY:y, ...extra}; }
 function enemy(x,y,minX,maxX,speed=75) { return {x,y,w:28,h:23,minX,maxX,speed,dir:1,phase:Math.random()*4}; }
 function coin(x,y) { return {x,y,r:10,taken:false,phase:Math.random()*6}; }
+function healingHeart(x,y) { return {x,y,r:12,taken:false,phase:Math.random()*6}; }
 const levels = [
   {
     name:'Bosque Saltitante', subtitle:'O começo da aventura', theme:'meadow', musicTrack:'grove', worldW:2700, spawn:{x:46,y:420}, goalX:2590,
@@ -241,13 +242,31 @@ const levels = [
     enemies:[], movers:[], checkpoints:[{x:190,y:460}], decorations:[{x:130,y:450,type:'crystal'},{x:550,y:445,type:'crystal'},{x:1340,y:445,type:'crystal'}],
     boss:{x:890,y:394,w:74,h:64,minX:700,maxX:1290,speed:68,dir:1,hp:3,maxHp:3,attackTimer:1.8,waves:[],type:'heart',label:'GUARDIÃO CORROMPIDO'}
   }
+
 ];
+
+// Corações de cura: recuperam uma vida perdida, até o limite de 3.
+// As posições ficam em superfícies acessíveis e relativamente seguras de cada fase.
+const HEALING_SPAWNS = [
+  [[1660,415]], // Bosque Saltitante — próximo ao checkpoint
+  [[1635,430]], // Caverna Cristalina
+  [[2480,275]], // Arquipélago das Nuvens — plataforma alta
+  [[1000,450]], // Pântano Corrompido
+  [[1598,440]], // Ruínas Ancestrais
+  [[1800,440]], // Mina Fulgurante
+  [[1780,445]], // Jardins da Lua
+  [[1780,445]], // Cidade Afundada
+  [[2010,445]], // Picos de Cristal
+  [[580,445]]   // Coração do Pântano — antes do chefe
+];
+levels.forEach((lv, i) => { lv.healingItems = (HEALING_SPAWNS[i] || []).map(([x,y]) => healingHeart(x,y)); });
 
 const sublevelTemplates = {
   'mushroom-grotto': {
     name:'Gruta dos Cogumelos', theme:'cave', musicTrack:'sub-grotto', worldW:1120, spawn:{x:130,y:431}, exitX:35, exitFloorY:460,
     platforms:[plat(0,460,1120,80,'ground'),plat(190,390,105),plat(355,335,100),plat(520,385,100,18,'bounce'),plat(680,330,105),plat(850,380,105),plat(970,315,100)],
     coins:[coin(220,355),coin(385,300),coin(550,345),coin(710,295),coin(880,345),coin(1000,280),coin(1065,420)],
+    healingItems:[healingHeart(565,430)],
     hazards:[{x:300,y:438,w:34,h:22},{x:760,y:438,w:40,h:22}], enemies:[enemy(430,437,400,490,65)],
     checkpoints:[{x:675,y:460}], decorations:[{x:130,y:445,type:'crystal'},{x:605,y:445,type:'crystal'}]
   },
@@ -255,12 +274,14 @@ const sublevelTemplates = {
     name:'Cofre Cristalino', theme:'ruins', musicTrack:'sub-vault', worldW:980, spawn:{x:130,y:431}, exitX:35, exitFloorY:460,
     platforms:[plat(0,460,980,80,'ground'),plat(190,385,95),plat(330,325,95,18,'moving',{moveY:20,speed:1.4,phase:1}),plat(485,375,95,18,'crumble'),plat(635,315,95),plat(790,370,95,18,'bounce')],
     coins:[coin(215,350),coin(355,285),coin(510,335),coin(660,275),coin(815,330),coin(900,420),coin(940,420)],
+    healingItems:[healingHeart(570,430)],
     hazards:[{x:405,y:438,w:28,h:22},{x:710,y:438,w:32,h:22}], enemies:[], checkpoints:[{x:625,y:460}], decorations:[{x:105,y:445,type:'crystal'},{x:930,y:445,type:'crystal'}]
   },
   'root-chamber': {
     name:'Câmara das Raízes', theme:'heart', musicTrack:'sub-roots', worldW:1040, spawn:{x:130,y:431}, exitX:35, exitFloorY:460,
     platforms:[plat(0,460,1040,80,'ground'),plat(180,395,100),plat(320,335,95),plat(470,380,100),plat(625,320,95,18,'moving',{moveX:24,speed:1.2,phase:1}),plat(790,370,100),plat(900,310,95)],
     coins:[coin(205,360),coin(345,295),coin(495,340),coin(650,280),coin(815,330),coin(925,270),coin(990,420)],
+    healingItems:[healingHeart(570,430)],
     hazards:[{x:380,y:438,w:30,h:22},{x:715,y:438,w:35,h:22}], enemies:[enemy(820,437,790,865,70)],
     checkpoints:[{x:610,y:460}], decorations:[{x:110,y:445,type:'flower'},{x:960,y:445,type:'crystal'}]
   }
@@ -269,7 +290,7 @@ function cloneSublevel(roomId) {
   const src=sublevelTemplates[roomId] || sublevelTemplates['mushroom-grotto'];
   return {...src,isSublevel:true,roomId,sublevelExitX:src.exitX,exitFloorY:src.exitFloorY,pipes:[],goalX:src.worldW-40,
     platforms:src.platforms.map(p=>({...p,baseX:p.x,baseY:p.y,prevX:p.x,prevY:p.y,hidden:false,triggered:false,crumbleTimer:0,respawnTimer:0})),
-    coins:src.coins.map((c,i)=>({...c,taken:false,id:i})),hazards:src.hazards.map(h=>({...h})),enemies:src.enemies.map(e=>({...e})),
+    coins:src.coins.map((c,i)=>({...c,taken:false,id:i})),healingItems:(src.healingItems||[]).map((h,i)=>({...h,taken:false,id:i})),hazards:src.hazards.map(h=>({...h})),enemies:src.enemies.map(e=>({...e})),
     checkpoints:src.checkpoints.map(c=>({...c,used:false})),decorations:src.decorations.map(d=>({...d})),boss:null};
 }
 let sublevelReturn = null, sublevelCache = {}, pipeTransition = null;
@@ -351,8 +372,9 @@ function updatePipeTransition(dt) {
 }
 
 const keys = new Set(), justPressed = new Set();
+const MAX_LIVES = 3;
 let state = 'menu', levelIndex = 0, level = null, player = null, settingsReturnState = 'menu';
-let cameraX = 0, score = 0, lives = 3, deaths = 0, runCoins = 0, elapsed = 0;
+let cameraX = 0, score = 0, lives = MAX_LIVES, deaths = 0, runCoins = 0, elapsed = 0;
 let particles = [], floatTexts = [], buttons = [], sliderRegions = [], mouse = {x:-100,y:-100};
 let checkpointX = 0, checkpointY = 0, invincible = 0, jumpBuffer = 0, coyote = 0, completionRecorded = false;
 // Ranking global: a chave publishable pode ficar no navegador; as permissões são controladas por RLS no Supabase.
@@ -435,7 +457,7 @@ function playSfx(name) {
   const patterns={
     coin:[[880,.07,'square',.13,0],[1320,.10,'square',.10,.055]], jump:[[330,.08,'square',.10,0],[495,.12,'square',.08,.045]], doublejump:[[490,.07,'square',.10,0],[660,.08,'square',.09,.055],[880,.10,'triangle',.07,.10]],
     bounce:[[220,.10,'triangle',.13,0],[440,.11,'square',.09,.07]], hurt:[[220,.17,'sawtooth',.12,0],[150,.20,'sawtooth',.09,.09]], checkpoint:[[523,.09,'square',.10,0],[659,.09,'square',.10,.08],[784,.17,'square',.10,.16]],
-    finish:[[523,.12,'square',.11,0],[659,.12,'square',.11,.12],[784,.12,'square',.11,.24],[1047,.25,'triangle',.11,.36]], stomp:[[440,.07,'square',.11,0],[587,.10,'square',.09,.04]], bossHit:[[220,.09,'sawtooth',.11,0],[165,.17,'sawtooth',.08,.06]], bossDefeat:[[392,.13,'square',.10,0],[494,.13,'square',.10,.12],[587,.13,'square',.11,.24],[784,.24,'triangle',.12,.36]], gameover:[[392,.14,'triangle',.10,0],[330,.14,'triangle',.09,.15],[262,.28,'triangle',.09,.30]], click:[[660,.04,'square',.045,0]], pipe:[[196,.08,'triangle',.08,0],[330,.09,'square',.06,.07],[494,.12,'triangle',.055,.14]], crumble:[[280,.06,'triangle',.08,0],[180,.08,'triangle',.07,.04]]
+    finish:[[523,.12,'square',.11,0],[659,.12,'square',.11,.12],[784,.12,'square',.11,.24],[1047,.25,'triangle',.11,.36]], heal:[[523,.08,'triangle',.12,0],[659,.08,'triangle',.11,.07],[1047,.18,'sine',.10,.14]], stomp:[[440,.07,'square',.11,0],[587,.10,'square',.09,.04]], bossHit:[[220,.09,'sawtooth',.11,0],[165,.17,'sawtooth',.08,.06]], bossDefeat:[[392,.13,'square',.10,0],[494,.13,'square',.10,.12],[587,.13,'square',.11,.24],[784,.24,'triangle',.12,.36]], gameover:[[392,.14,'triangle',.10,0],[330,.14,'triangle',.09,.15],[262,.28,'triangle',.09,.30]], click:[[660,.04,'square',.045,0]], pipe:[[196,.08,'triangle',.08,0],[330,.09,'square',.06,.07],[494,.12,'triangle',.055,.14]], crumble:[[280,.06,'triangle',.08,0],[180,.08,'triangle',.07,.04]]
   };
   for(const [f,d,w,v,delay] of (patterns[name]||[])) tone(f,d,w,v,'sfx',delay);
 }
@@ -447,6 +469,7 @@ function cloneLevel(i) {
     ...src,
     platforms:src.platforms.map(p=>({...p,baseX:p.x,baseY:p.y,prevX:p.x,prevY:p.y,hidden:false,triggered:false,crumbleTimer:0,respawnTimer:0})),
     coins:src.coins.map((c,i)=>({...c,taken:false,id:i})),
+    healingItems:(src.healingItems||[]).map((h,i)=>({...h,taken:false,id:i})),
     hazards:src.hazards.map(h=>({...h})),
     enemies:src.enemies.map(e=>({...e})),
     checkpoints:src.checkpoints.map(c=>({...c,used:false})),
@@ -455,14 +478,14 @@ function cloneLevel(i) {
     boss:src.boss ? {...src.boss, waves:[], attackTimer:src.boss.attackTimer||1.8} : null
   };
 }
-function beginCampaign() { sublevelCache={}; score=0; lives=3; deaths=0; runCoins=0; scoreSubmissionHandled=false; loadLevel(0); state='playing'; }
+function beginCampaign() { sublevelCache={}; score=0; lives=MAX_LIVES; deaths=0; runCoins=0; scoreSubmissionHandled=false; loadLevel(0); state='playing'; }
 function loadLevel(i) {
   sublevelReturn=null; pipeTransition=null; levelIndex=i; level=cloneLevel(i); cameraX=0; elapsed=0; particles=[]; floatTexts=[]; invincible=0; jumpBuffer=0; coyote=0; completionRecorded=false;
   checkpointX=level.spawn.x; checkpointY=level.spawn.y;
   player={x:level.spawn.x,y:level.spawn.y,w:28,h:29,vx:0,vy:0,onGround:false,groundPlatform:null,face:1,anim:0,jumpsUsed:0};
 }
 function restartCampaign() { beginCampaign(); }
-function restartLevel() { if(level) { const lost=level.coins.filter(c=>c.taken).length; score=Math.max(0,score-lost*10); runCoins=Math.max(0,runCoins-lost); lives=3; loadLevel(levelIndex); state='playing'; } }
+function restartLevel() { if(level) { const lost=level.coins.filter(c=>c.taken).length; score=Math.max(0,score-lost*10); runCoins=Math.max(0,runCoins-lost); lives=MAX_LIVES; loadLevel(levelIndex); state='playing'; } }
 function respawn() {
   lives--; deaths++; invincible=1.5; player.x=checkpointX; player.y=checkpointY; player.vx=0; player.vy=0; player.onGround=false; player.groundPlatform=null; player.jumpsUsed=0; cameraX=Math.max(0,Math.min(level.worldW-W,player.x-W*0.28));
   particles.push(...burst(player.x+player.w/2,player.y+player.h/2,'#ff7d83',16)); playSfx('hurt');
@@ -563,6 +586,16 @@ function update(dt) {
 
   // Collectibles.
   for(const c of level.coins){if(c.taken)continue;const dx=(player.x+player.w/2)-c.x,dy=(player.y+player.h/2)-c.y;if(dx*dx+dy*dy<=(c.r+19)*(c.r+19)){c.taken=true;score+=10;runCoins++;particles.push(...burst(c.x,c.y,'#ffdc62',12));addText(c.x,c.y-10,'+10');playSfx('coin');}}
+  // Healing hearts restore one lost life. At full capacity they remain available to collect later.
+  for(const h of (level.healingItems||[])) {
+    if(h.taken || lives>=MAX_LIVES) continue;
+    const dx=(player.x+player.w/2)-h.x, dy=(player.y+player.h/2)-h.y;
+    if(dx*dx+dy*dy<=(h.r+19)*(h.r+19)) {
+      h.taken=true; lives=Math.min(MAX_LIVES,lives+1);
+      particles.push(...burst(h.x,h.y,'#ff91ae',18),...burst(h.x,h.y,'#b6ffcf',8));
+      addText(h.x,h.y-14,'+1 VIDA','#ffbed0'); playSfx('heal');
+    }
+  }
   // Hazards and patrol enemies.
   for(const h of level.hazards){if(rects(player,{x:h.x+4,y:h.y+5,w:h.w-8,h:h.h-4})&&invincible<=0){respawn();return;}}
   for(const e of level.enemies){e.x+=e.speed*e.dir*dt;if(e.x<e.minX){e.x=e.minX;e.dir=1;}if(e.x+e.w>e.maxX){e.x=e.maxX-e.w;e.dir=-1;}if(!e.defeated&&rects(player,e)&&invincible<=0){if(oldY+player.h<=e.y+9){e.defeated=true;player.y=e.y-player.h;player.vy=-430;player.jumpsUsed=1;score+=25;particles.push(...burst(e.x+e.w/2,e.y,'#b7ffbd',15));addText(e.x+e.w/2,e.y-8,'+25','#c4ffb8');playSfx('stomp');}else{respawn();return;}}} level.enemies=level.enemies.filter(e=>!e.defeated);
@@ -671,6 +704,20 @@ function drawCoin(c,t) {
   poly([[-ww,-8],[0,-12],[ww,-8],[ww,4],[0,10],[-ww,4]],themes[level.theme].edge);
   poly([[-ww+2,-7],[0,-10],[ww-2,-7],[ww-2,3],[0,7],[-ww+2,3]],themes[level.theme].coin);
   if(ww>6){ctx.fillStyle=themes[level.theme].coin2;ctx.fillRect(-2,-6,4,9);ctx.fillRect(-4,-3,8,3);}ctx.restore();
+}
+function drawHealingHeart(h,t) {
+  if(h.taken) return;
+  const x=Math.round(h.x-cameraX), y=Math.round(h.y+Math.sin(t*3.8+h.phase)*3);
+  if(x<-30||x>W+30) return;
+  const pulse=.5+.5*Math.sin(t*5+h.phase);
+  ctx.save(); ctx.translate(x,y);
+  ctx.globalAlpha=.15+.12*pulse; ctx.fillStyle='#ff7d9d'; ctx.beginPath(); ctx.arc(0,0,17+2*pulse,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
+  poly([[-12,-3],[-12,-8],[-8,-12],[-3,-12],[0,-8],[3,-12],[8,-12],[12,-8],[12,-3],[0,11]],'#7a2e52','#3a2444',2);
+  poly([[-9,-4],[-9,-8],[-6,-9],[-2,-9],[0,-5],[3,-9],[7,-9],[9,-7],[9,-3],[0,8]],'#ff668b');
+  ctx.fillStyle='#ffd8e1'; ctx.fillRect(-7,-7,4,3); ctx.fillRect(-3,-9,3,3);
+  ctx.fillStyle='#fff3b2'; ctx.globalAlpha=.75+.25*pulse; ctx.fillRect(12,-14,3,3); ctx.fillRect(-15,5,2,2); ctx.globalAlpha=1;
+  ctx.restore();
 }
 function drawHazard(h) {
   const x=h.x-cameraX,y=h.y; if(x+h.w<0||x>W)return;
@@ -788,6 +835,7 @@ function drawWorld(t) {
   for(const h of level.hazards)drawHazard(h);
   for(const cp of level.checkpoints)drawCheckpoint(cp);
   for(const c of level.coins)drawCoin(c,t);
+  for(const h of (level.healingItems||[]))drawHealingHeart(h,t);
   for(const e of level.enemies)drawEnemy(e,t);
   if(level.boss && level.boss.hp>0) drawBoss();
   if(!level.isSublevel)drawFlag();drawFrog(t);
@@ -865,7 +913,7 @@ function drawInstructions(t) {
   text('ESPAÇO / W / ↑',W/2,199,15,'#ffffff','center');text('Pular; após a 2ª fase, use salto duplo no ar',W/2,220,11,'#b8cee5','center','700');
   text('PLATAFORMAS ESPECIAIS',W/2,258,13,'#ffe5a5','center');text('Rosa = impulsiona • rachada = desmorona • brilhante = móvel',W/2,280,10,'#b8cee5','center','700');
   text('P / ESC pausa • R reinicia a fase',W/2,315,12,'#ffffff','center');text('Pule sobre inimigos e chefes para causar dano.',W/2,340,10,'#b8cee5','center','700');
-  text('Moedas valem +10. Bandeiras salvam. ↓ entra/sai das tubulações.',W/2,365,10,'#ffe6a0','center','700');
+  text('Moedas +10 • corações recuperam 1 vida perdida (máx. 3). ↓ tubulações.',W/2,365,10,'#ffe6a0','center','700');
   buttons=[];drawButton(360,410,240,38,'VOLTAR AO MENU',()=>state='menu','primary');
 }
 function drawLevelSelect(t) {
@@ -878,7 +926,7 @@ function drawLevelSelect(t) {
     roundedRect(x+8,y+8,7,46,3,colors[i]);
     text(`${String(i+1).padStart(2,'0')} • ${lv.name.toUpperCase()}`,x+24,y+20,10,unlocked?'#fff':'#8292ac','left','900');
     text(completed?'✓ CONCLUÍDA':descriptions[i],x+24,y+43,9,completed?'#a6f8b8':'#c5d8ef','left','700');
-    if(unlocked)drawButton(x+256,y+17,110,30,completed?'REJOGAR':'JOGAR',()=>{sublevelCache={};score=0;lives=3;deaths=0;runCoins=0;scoreSubmissionHandled=false;loadLevel(i);state='playing';},'primary');
+    if(unlocked)drawButton(x+256,y+17,110,30,completed?'REJOGAR':'JOGAR',()=>{sublevelCache={};score=0;lives=MAX_LIVES;deaths=0;runCoins=0;scoreSubmissionHandled=false;loadLevel(i);state='playing';},'primary');
     else {roundedRect(x+256,y+17,110,30,7,'#303d54','#46536a',1);text('BLOQUEADA',x+311,y+32,9,'#8492a9','center','900');}
   });
   drawButton(360,454,240,30,'VOLTAR AO MENU',()=>state='menu','secondary');
