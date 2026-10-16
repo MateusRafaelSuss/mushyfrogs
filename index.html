@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <title>MushyFrog — Pixel Quest</title>
 <style>
-  :root { color-scheme: dark; --ink:#11233b; --mint:#a8f5b5; --cream:#fff5d8; --touch-scale:1.2; }
+  :root { color-scheme: dark; --ink:#11233b; --mint:#a8f5b5; --cream:#fff5d8; --touch-scale:1.0; }
   * { box-sizing: border-box; }
   html, body { margin:0; min-height:100%; overscroll-behavior:none; }
   body {
@@ -37,13 +37,14 @@
   canvas { position:absolute; inset:0; display:block; width:100%; height:100%; aspect-ratio:16/9; border-radius:11px; background:#4c77d0; image-rendering:pixelated; outline:none; touch-action:none; }
   .touch-controls { position:absolute; inset:0; z-index:5; pointer-events:none; touch-action:none; user-select:none; -webkit-user-select:none; }
   .touch-controls[hidden] { display:none !important; }
-  .move-pad { position:absolute; left:2.5%; bottom:3.5%; display:flex; gap:clamp(10px, 2vw, 18px); pointer-events:none; }
-  .touch-btn { display:grid; place-items:center; width:clamp(78px, calc(18svh * var(--touch-scale)), 118px); height:clamp(78px, calc(18svh * var(--touch-scale)), 118px); padding:0; border:3px solid #e0f5ffdb; border-radius:19px; color:#fff; background:#14253bd9; box-shadow:0 5px 0 #0a1529c9, inset 0 1px #ffffff50; font-size:clamp(30px, 5.6vh, 44px); font-weight:900; pointer-events:auto; touch-action:none; -webkit-tap-highlight-color:transparent; }
-  .touch-btn:active, .touch-btn.pressed { transform:translateY(3px) scale(.97); background:#385879eF; box-shadow:0 1px 0 #0a1529a8, inset 0 1px #ffffff38; }
-  .jump-btn { position:absolute; right:2.8%; bottom:3.5%; width:clamp(108px, calc(24svh * var(--touch-scale)), 158px); height:clamp(84px, calc(18svh * var(--touch-scale)), 118px); border-color:#d4ffe0; border-radius:24px; color:#15334a; background:#93f0aadd; font-size:clamp(15px, 2.8vh, 21px); letter-spacing:.04em; box-shadow:0 6px 0 #317c61, inset 0 1px #ffffffa8; }
-  .jump-btn:active, .jump-btn.pressed { background:#c6ffd0; box-shadow:0 1px 0 #317c61, inset 0 1px #ffffffa8; }
-  .mobile-top-controls { position:absolute; z-index:6; top:3%; right:2.5%; display:flex; gap:9px; pointer-events:none; }
-  .mini-btn { display:grid; place-items:center; width:clamp(44px, 8vh, 58px); height:clamp(44px, 8vh, 58px); padding:0; border:1px solid #d9efffc4; border-radius:12px; color:#fff; background:#14253bba; font-size:24px; font-weight:900; pointer-events:auto; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  .move-pad { position:absolute; left:2.5%; bottom:3.5%; display:flex; gap:clamp(8px, 1.5vw, 13px); pointer-events:none; }
+  .touch-btn { display:grid; place-items:center; width:clamp(62px, calc(13svh * var(--touch-scale)), 84px); height:clamp(62px, calc(13svh * var(--touch-scale)), 84px); padding:0; border:2px solid #e0f5ff99; border-radius:15px; color:#fff; background:#14253b80; box-shadow:0 3px 0 #0a152980, inset 0 1px #ffffff30; font-size:clamp(23px, 4.4vh, 34px); font-weight:900; opacity:.86; pointer-events:auto; touch-action:none; -webkit-tap-highlight-color:transparent; }
+  .touch-btn:active, .touch-btn.pressed { transform:translateY(2px) scale(.97); opacity:1; background:#385879cf; box-shadow:0 1px 0 #0a1529a0, inset 0 1px #ffffff38; }
+  .jump-btn { position:absolute; right:2.8%; bottom:3.5%; width:clamp(82px, calc(17svh * var(--touch-scale)), 114px); height:clamp(66px, calc(13svh * var(--touch-scale)), 88px); border-color:#d4ffe0a8; border-radius:18px; color:#15334a; background:#93f0aa99; font-size:clamp(13px, 2.3vh, 18px); letter-spacing:.04em; box-shadow:0 4px 0 #317c61a0, inset 0 1px #ffffff80; }
+  .jump-btn:active, .jump-btn.pressed { opacity:1; background:#c6ffd0e8; box-shadow:0 1px 0 #317c61, inset 0 1px #ffffffa8; }
+  .mobile-top-controls { position:absolute; z-index:6; top:3%; right:2.5%; display:flex; gap:7px; pointer-events:none; }
+  .mini-btn { display:grid; place-items:center; width:clamp(36px, 6.5vh, 48px); height:clamp(36px, 6.5vh, 48px); padding:0; border:1px solid #d9efff80; border-radius:10px; color:#fff; background:#14253b78; font-size:19px; font-weight:900; opacity:.84; pointer-events:auto; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  .mini-btn:active { opacity:1; background:#14253bc9; }
   .rotate-hint { position:absolute; z-index:7; top:12%; left:50%; transform:translateX(-50%); max-width:90%; padding:8px 12px; border:1px solid #d9efff66; border-radius:10px; color:#fff; background:#10213ce8; text-align:center; font-size:clamp(10px, 2.2vw, 13px); font-weight:800; pointer-events:none; white-space:nowrap; }
   .rotate-hint[hidden] { display:none; }
   .bottomline { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; margin:12px 4px 0; color:#91a8c9; font-size:11px; }
@@ -359,10 +360,12 @@ const SUPABASE_URL = 'https://ejsmcgoodinstxshhwlq.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Jgz_DvDqjsTn2tx715zMaQ_6_H8lKgQ';
 let leaderboardRows = [], leaderboardLoading = false, leaderboardMessage = 'Carregando ranking...', scoreSubmissionHandled = false;
 let lastTimestamp = performance.now(), lastFrameDt = 1/60;
-const DEFAULT_SETTINGS = { musicEnabled:true, sfxEnabled:true, musicVolume:0.22, sfxVolume:0.55, controlScale:1.2 };
+const DEFAULT_SETTINGS = { musicEnabled:true, sfxEnabled:true, musicVolume:0.22, sfxVolume:0.55, controlScale:1.0 };
 const DEFAULT_PROGRESS = { unlockedLevel:0, completedLevels:[], perfectLevels:[], bestScore:0, totalCoins:0, doubleJumpUnlocked:false, bossDefeated:false };
 function readStored(key, fallback) { try { const value=localStorage.getItem(key); return value ? {...fallback, ...JSON.parse(value)} : {...fallback}; } catch (_) { return {...fallback}; } }
 let settings = readStored('mushyfrog-settings-v2', DEFAULT_SETTINGS);
+// Migrate the previous default scale (1.2) to the more compact default.
+if (Number(settings.controlScale) === 1.2) { settings.controlScale = 1.0; saveSettings(); }
 let progress = (() => {
   try {
     const current=localStorage.getItem('mushyfrog-progress-v3');
@@ -379,7 +382,7 @@ let audioCtx = null, musicGain = null, sfxGain = null, musicTimer = null, musicS
 function saveSettings() { try { localStorage.setItem('mushyfrog-settings-v2', JSON.stringify(settings)); } catch (_) {} }
 function saveProgress() { try { localStorage.setItem('mushyfrog-progress-v3', JSON.stringify(progress)); } catch (_) {} }
 function applySettings() {
-  document.documentElement.style.setProperty('--touch-scale', String(clamp(Number(settings.controlScale)||1.2,0.85,1.5)));
+  document.documentElement.style.setProperty('--touch-scale', String(clamp(Number(settings.controlScale)||1.0,0.85,1.5)));
   if (musicGain) musicGain.gain.setTargetAtTime(settings.musicEnabled ? settings.musicVolume : 0, audioCtx.currentTime, 0.04);
   if (sfxGain) sfxGain.gain.setTargetAtTime(settings.sfxEnabled ? settings.sfxVolume : 0, audioCtx.currentTime, 0.04);
 }
