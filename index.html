@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salto do Sapinho — Plataforma</title>
+<style>
+  :root { color-scheme: dark; --ink:#11233b; --mint:#a8f5b5; --cream:#fff5d8; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; min-height:100%; }
+  body {
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color:#eef7ff;
+    background: radial-gradient(ellipse at 50% 0%, #233e68 0%, #111a31 48%, #090f1d 100%);
+  }
+  .shell { width:min(1120px, 100%); }
+  .topline { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:0 2px 12px; }
+  .brand { display:flex; align-items:center; gap:10px; font-size:clamp(12px, 2vw, 16px); letter-spacing:.08em; font-weight:900; }
+  .brand-mark { display:grid; place-items:center; width:40px; height:40px; flex:0 0 40px; overflow:hidden; border:1px solid #6489a9; border-radius:10px; background:#203957; box-shadow:0 4px 0 #4ba86b; }
+  .brand-mark img { display:block; width:36px; height:36px; image-rendering:pixelated; }
+  .tip { color:#a5b9d5; font-size:11px; text-align:right; }
+  .frame { padding:8px; border-radius:18px; background:linear-gradient(135deg,#8cb5dc,#344c78 42%,#172641); box-shadow:0 22px 80px #0008, inset 0 1px #ffffff66; }
+  canvas { display:block; width:100%; height:auto; aspect-ratio:16/9; border-radius:11px; background:#4c77d0; image-rendering:pixelated; outline:none; }
+  .bottomline { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; margin:12px 4px 0; color:#91a8c9; font-size:11px; }
+  .key { display:inline-block; border:1px solid #5d7397; border-bottom-width:3px; border-radius:5px; padding:2px 5px; color:#dceaff; background:#243755; margin:0 2px; }
+  @media(max-width:620px) { body{padding:10px} .tip{display:none}.frame{padding:5px;border-radius:12px}.bottomline{font-size:9px} }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topline">
+    <div class="brand"><span class="brand-mark"><img src="assets/frog-idle.png" alt=""></span><span>SAPINHO <span style="color:#8ee7ac">PIXEL QUEST</span></span></div>
+    <div class="tip">UMA AVENTURA DE PLATAFORMA EM 3 FASES</div>
+  </div>
+  <div class="frame"><canvas id="game" width="960" height="540" tabindex="0" aria-label="Jogo de plataforma Salto do Sapinho"></canvas></div>
+  <div class="bottomline">
+    <div><span class="key">A</span><span class="key">D</span> / <span class="key">←</span><span class="key">→</span> mover &nbsp; <span class="key">ESPAÇO</span> pular</div>
+    <div><span class="key">P</span> pausar &nbsp; <span class="key">R</span> reiniciar campanha</div>
+  </div>
+</div>
+<script>
+(() => {
+'use strict';
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+ctx.imageSmoothingEnabled = false;
+const frogSheet = new Image();
+frogSheet.src = 'assets/frog-sprites.png'; // 4 quadros de 32x32: parado, corrida A/B e pulo.
+const frogIdle = new Image();
+frogIdle.src = 'assets/frog-idle.png';
+
+const themes = {
+  meadow: { sky1:'#4f83dc', sky2:'#86c9ee', far:'#4d9a91', near:'#317f78', soil:'#c8784d', soil2:'#e99a68', top:'#62d58a', top2:'#34ad72', edge:'#513d50', coin:'#ffc747', coin2:'#ffec88', cloud:'#effaff' },
+  cave:   { sky1:'#343e5d', sky2:'#555e79', far:'#39445f', near:'#28344e', soil:'#818ba1', soil2:'#c1d0d7', top:'#9ca7bb', top2:'#d3e0e4', edge:'#293145', coin:'#ffc747', coin2:'#ffec88', cloud:'#aebbd0' },
+  sky:    { sky1:'#3989df', sky2:'#a5e5ff', far:'#8ec9d5', near:'#5eabc7', soil:'#c9784d', soil2:'#f6bf8c', top:'#ffdfa0', top2:'#f4ad7b', edge:'#714b54', coin:'#ffc747', coin2:'#ffec88', cloud:'#fffdf2' }
+};
+
+function plat(x,y,w,h=20,kind='normal',extra={}) { return {x,y,w,h,kind,baseX:x,baseY:y,prevX:x,prevY:y, ...extra}; }
+function enemy(x,y,minX,maxX,speed=75) { return {x,y,w:28,h:23,minX,maxX,speed,dir:1,phase:Math.random()*4}; }
+function coin(x,y) { return {x,y,r:10,taken:false,phase:Math.random()*6}; }
+const levels = [
+  {
+    name:'Bosque Saltitante', subtitle:'O começo da aventura', theme:'meadow', worldW:2700, spawn:{x:46,y:420}, goalX:2590,
+    platforms:[
+      plat(0,470,520,70,'ground'), plat(625,445,350,95,'ground'), plat(1080,470,420,70,'ground'), plat(1610,435,360,105,'ground'), plat(2075,465,625,75,'ground'),
+      plat(235,385,115),plat(390,328,108),plat(740,360,108),plat(865,305,100),plat(1160,385,118),plat(1350,327,112),plat(1680,360,105),plat(1830,305,108),plat(2200,375,118),plat(2380,325,112)
+    ],
+    coins:[coin(275,350),coin(430,293),coin(570,408),coin(775,325),coin(902,270),coin(1010,403),coin(1195,350),coin(1385,292),coin(1535,420),coin(1710,325),coin(1860,270),coin(1995,390),coin(2230,340),coin(2410,290),coin(2515,425)],
+    hazards:[{x:300,y:448,w:55,h:22},{x:685,y:423,w:42,h:22},{x:1240,y:448,w:50,h:22},{x:1750,y:413,w:48,h:22},{x:2285,y:443,w:54,h:22}],
+    enemies:[enemy(410,447,365,500,72),enemy(1300,447,1120,1450,85),enemy(2140,442,2100,2440,88)],
+    movers:[], checkpoints:[{x:1648,y:435}],
+    decorations:[{x:150,y:450,type:'flower'},{x:560,y:425,type:'flower'},{x:1030,y:435,type:'flower'},{x:1550,y:440,type:'flower'},{x:2020,y:430,type:'flower'}]
+  },
+  {
+    name:'Caverna Cristalina', subtitle:'Pule com precisão', theme:'cave', worldW:3020, spawn:{x:44,y:410}, goalX:2900,
+    platforms:[
+      plat(0,460,330,80,'ground'),plat(435,425,300,115,'ground'),plat(815,460,305,80,'ground'),plat(1200,405,350,135,'ground'),plat(1630,450,335,90,'ground'),plat(2040,415,335,125,'ground'),plat(2475,460,545,80,'ground'),
+      plat(210,365,100),plat(355,315,92),plat(555,355,100),plat(690,300,92),plat(900,360,100),plat(1040,305,92),plat(1285,340,105),plat(1430,285,105),plat(1700,360,105),plat(1850,310,95),plat(2110,350,105),plat(2260,295,105),plat(2540,365,100),plat(2680,315,105),
+      plat(750,390,72,18,'moving',{moveX:70,speed:1.25,phase:1.2}),plat(1900,385,78,18,'moving',{moveX:62,speed:1.5,phase:3.2})
+    ],
+    coins:[coin(235,330),coin(380,280),coin(485,390),coin(580,320),coin(715,265),coin(855,425),coin(930,325),coin(1065,270),coin(1310,305),coin(1455,250),coin(1568,368),coin(1730,325),coin(1880,275),coin(1985,395),coin(2140,315),coin(2290,260),coin(2405,385),coin(2565,330),coin(2705,280),coin(2820,420)],
+    hazards:[{x:260,y:438,w:42,h:22},{x:500,y:403,w:54,h:22},{x:875,y:438,w:45,h:22},{x:1330,y:383,w:52,h:22},{x:1770,y:428,w:48,h:22},{x:2160,y:393,w:54,h:22},{x:2595,y:438,w:45,h:22}],
+    enemies:[enemy(455,402,440,700,105),enemy(1220,382,1210,1510,105),enemy(2070,392,2050,2330,115),enemy(2510,437,2490,2860,120)],
+    movers:[], checkpoints:[{x:1660,y:450},{x:2315,y:295}], decorations:[{x:170,y:440,type:'crystal'},{x:790,y:445,type:'crystal'},{x:1135,y:445,type:'crystal'},{x:1990,y:435,type:'crystal'}]
+  },
+  {
+    name:'Arquipélago das Nuvens', subtitle:'A última e maior prova', theme:'sky', worldW:3400, spawn:{x:40,y:410}, goalX:3280,
+    platforms:[
+      plat(0,460,255,80,'ground'),plat(405,450,190,90,'ground'),plat(765,430,185,110,'ground'),plat(1120,460,185,80,'ground'),plat(1485,435,190,105,'ground'),plat(1860,460,185,80,'ground'),plat(2230,430,185,110,'ground'),plat(2600,455,170,85,'ground'),plat(2925,460,475,80,'ground'),
+      plat(205,385,100),plat(315,325,92),plat(515,365,94),plat(630,305,95),plat(875,350,90),plat(995,290,95),plat(1220,370,92),plat(1340,310,95),plat(1595,350,95),plat(1715,290,95),plat(1955,365,92),plat(2070,305,95),plat(2320,350,95),plat(2435,290,95),plat(2690,365,95),plat(2805,305,95),
+      plat(705,370,78,18,'moving',{moveY:55,speed:1.4,phase:0.4}),plat(1785,350,80,18,'moving',{moveY:48,speed:1.8,phase:2.6}),plat(2515,360,78,18,'moving',{moveX:65,speed:1.3,phase:1.8})
+    ],
+    coins:[coin(230,350),coin(340,290),coin(540,330),coin(655,270),coin(800,395),coin(900,315),coin(1020,255),coin(1150,425),coin(1245,330),coin(1365,275),coin(1510,395),coin(1620,310),coin(1740,255),coin(1890,425),coin(1980,325),coin(2095,270),coin(2250,390),coin(2345,310),coin(2460,255),coin(2630,415),coin(2715,325),coin(2830,270),coin(3000,420),coin(3150,420),coin(3260,385)],
+    hazards:[{x:455,y:428,w:42,h:22},{x:815,y:408,w:45,h:22},{x:1170,y:438,w:48,h:22},{x:1530,y:413,w:50,h:22},{x:1900,y:438,w:50,h:22},{x:2275,y:408,w:48,h:22},{x:2640,y:433,w:45,h:22},{x:3015,y:438,w:48,h:22}],
+    enemies:[enemy(430,427,415,555,120),enemy(790,407,775,925,125),enemy(1510,412,1500,1640,130),enemy(2260,407,2245,2390,135),enemy(2950,437,2940,3200,140)],
+    movers:[], checkpoints:[{x:1385,y:310},{x:2480,y:290}], decorations:[{x:120,y:440,type:'cloudflower'},{x:720,y:410,type:'cloudflower'},{x:1080,y:440,type:'cloudflower'},{x:1800,y:440,type:'cloudflower'},{x:2200,y:410,type:'cloudflower'}]
+  }
+];
+
+const keys = new Set(), justPressed = new Set();
+let state = 'menu', levelIndex = 0, level = null, player = null;
+let cameraX = 0, score = 0, lives = 3, deaths = 0, runCoins = 0, elapsed = 0;
+let particles = [], floatTexts = [], buttons = [], mouse = {x:-100,y:-100};
+let checkpointX = 0, checkpointY = 0, invincible = 0, jumpBuffer = 0, coyote = 0;
+let lastTimestamp = performance.now(), lastFrameDt = 1/60;
+
+function cloneLevel(i) {
+  const src = levels[i];
+  return {
+    ...src,
+    platforms:src.platforms.map(p=>({...p,baseX:p.x,baseY:p.y,prevX:p.x,prevY:p.y})),
+    coins:src.coins.map((c,i)=>({...c,taken:false,id:i})),
+    hazards:src.hazards.map(h=>({...h})),
+    enemies:src.enemies.map(e=>({...e})),
+    checkpoints:src.checkpoints.map(c=>({...c,used:false})),
+    decorations:src.decorations.map(d=>({...d}))
+  };
+}
+function beginCampaign() { score=0; lives=3; deaths=0; runCoins=0; levelIndex=0; loadLevel(0); state='playing'; }
+function loadLevel(i) {
+  levelIndex=i; level=cloneLevel(i); cameraX=0; elapsed=0; particles=[]; floatTexts=[]; invincible=0; jumpBuffer=0; coyote=0;
+  checkpointX=level.spawn.x; checkpointY=level.spawn.y;
+  player={x:level.spawn.x,y:level.spawn.y,w:28,h:29,vx:0,vy:0,onGround:false,groundPlatform:null,face:1,anim:0};
+}
+function restartCampaign() { beginCampaign(); }
+function respawn() {
+  lives--; deaths++; invincible=1.5; player.x=checkpointX; player.y=checkpointY; player.vx=0; player.vy=0; player.onGround=false; player.groundPlatform=null; cameraX=Math.max(0,Math.min(level.worldW-W,player.x-W*0.28));
+  particles.push(...burst(player.x+player.w/2,player.y+player.h/2,'#ff7d83',16));
+  if(lives<=0) state='gameover';
+}
+function nextLevel() { if(levelIndex<levels.length-1) { loadLevel(levelIndex+1); state='playing'; } else state='win'; }
+function rects(a,b) { return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y; }
+function clamp(v,min,max) { return Math.max(min,Math.min(max,v)); }
+function burst(x,y,color,n=10) {
+  const out=[]; for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=40+Math.random()*160;out.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-30,life:.45+Math.random()*.5,max:.95,color,size:2+Math.random()*4});} return out;
+}
+function addText(x,y,text,color='#fff2a3') { floatTexts.push({x,y,text,color,life:1}); }
+
+function updateMovingPlatforms(dt) {
+  for(const p of level.platforms) {
+    p.prevX=p.x; p.prevY=p.y;
+    if(p.moveX) p.x=p.baseX+Math.sin(elapsed*p.speed+p.phase)*p.moveX;
+    if(p.moveY) p.y=p.baseY+Math.sin(elapsed*p.speed+p.phase)*p.moveY;
+    if(player.groundPlatform===p) { player.x+=p.x-p.prevX; player.y+=p.y-p.prevY; }
+  }
+}
+function update(dt) {
+  if(state!=='playing') return;
+  elapsed+=dt;
+  updateMovingPlatforms(dt);
+  invincible=Math.max(0,invincible-dt);
+  jumpBuffer=Math.max(0,jumpBuffer-dt);
+  if(justPressed.has('Space')||justPressed.has('ArrowUp')||justPressed.has('KeyW')) jumpBuffer=.14;
+  const left=keys.has('ArrowLeft')||keys.has('KeyA');
+  const right=keys.has('ArrowRight')||keys.has('KeyD');
+  const accel=2100, maxSpeed=265;
+  if(left&&!right){player.vx-=accel*dt;player.face=-1;} else if(right&&!left){player.vx+=accel*dt;player.face=1;} else player.vx*=Math.pow(.0008,dt);
+  player.vx=clamp(player.vx,-maxSpeed,maxSpeed);
+  if(player.onGround) coyote=.11; else coyote=Math.max(0,coyote-dt);
+  if(jumpBuffer>0&&coyote>0){player.vy=-625;player.onGround=false;player.groundPlatform=null;coyote=0;jumpBuffer=0;}
+  player.anim+=dt*(Math.abs(player.vx)>20?10:3);
+
+  // Horizontal resolution.
+  const oldX=player.x; player.x+=player.vx*dt;
+  for(const p of level.platforms){ if(!rects(player,p)) continue;
+    if(player.vx>0) player.x=p.x-player.w; else if(player.vx<0) player.x=p.x+p.w;
+    player.vx=0;
+  }
+  player.x=clamp(player.x,0,level.worldW-player.w);
+
+  // Vertical resolution and platform landings.
+  const oldY=player.y; player.vy+=1650*dt; player.vy=Math.min(player.vy,900); player.y+=player.vy*dt;
+  player.onGround=false; player.groundPlatform=null;
+  for(const p of level.platforms){
+    if(player.x+player.w<=p.x+2||player.x>=p.x+p.w-2) continue;
+    if(player.vy>=0 && oldY+player.h<=p.prevY+12 && player.y+player.h>=p.y){
+      player.y=p.y-player.h; player.vy=0; player.onGround=true; player.groundPlatform=p;
+    } else if(player.vy<0 && oldY>=p.prevY+p.h-2 && player.y<=p.y+p.h){
+      player.y=p.y+p.h; player.vy=35;
+    }
+  }
+  if(player.y>H+120) { respawn(); return; }
+
+  // Collectibles.
+  for(const c of level.coins){if(c.taken)continue;const dx=(player.x+player.w/2)-c.x,dy=(player.y+player.h/2)-c.y;if(dx*dx+dy*dy<=(c.r+19)*(c.r+19)){c.taken=true;score+=10;runCoins++;particles.push(...burst(c.x,c.y,'#ffdc62',12));addText(c.x,c.y-10,'+10');}}
+  // Hazards and patrol enemies.
+  for(const h of level.hazards){if(rects(player,{x:h.x+4,y:h.y+5,w:h.w-8,h:h.h-4})&&invincible<=0){respawn();return;}}
+  for(const e of level.enemies){e.x+=e.speed*e.dir*dt;if(e.x<e.minX){e.x=e.minX;e.dir=1;}if(e.x+e.w>e.maxX){e.x=e.maxX-e.w;e.dir=-1;}if(rects(player,e)&&invincible<=0){respawn();return;}}
+  // Checkpoints: only activate markers with a real platform directly underneath.
+  // This prevents a checkpoint from ever saving a respawn point over a gap/void.
+  for(const cp of level.checkpoints){
+    const support = level.platforms.find(p =>
+      cp.x >= p.x + player.w/2 && cp.x <= p.x + p.w - player.w/2 && Math.abs(p.y-cp.y) <= 6
+    );
+    if(!support) continue;
+    if(!cp.used && Math.abs((player.x+player.w/2)-cp.x)<28 && player.y+player.h>support.y-50){
+      cp.used=true;
+      checkpointX=cp.x-player.w/2;
+      checkpointY=support.y-player.h;
+      addText(cp.x,support.y-42,'CHECKPOINT!','#c5ffcd');
+      particles.push(...burst(cp.x,support.y-20,'#8fffb5',18));
+    }
+  }
+  // Goal.
+  if(player.x+player.w>=level.goalX){state='levelcomplete';player.vx=0;player.vy=0;particles.push(...burst(level.goalX,270,'#fff09a',32));}
+  // Particles and camera.
+  for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=230*dt;p.life-=dt;} particles=particles.filter(p=>p.life>0);
+  for(const t of floatTexts){t.y-=30*dt;t.life-=dt;}floatTexts=floatTexts.filter(t=>t.life>0);
+  const target=clamp(player.x-W*.34,0,level.worldW-W);cameraX+=(target-cameraX)*Math.min(1,dt*6);
+}
+
+function roundedRect(x,y,w,h,r,fill,stroke=null,lw=1){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.lineWidth=lw;ctx.strokeStyle=stroke;ctx.stroke();}}
+function text(str,x,y,size=18,color='#fff',align='left',weight='800') {ctx.font=`${weight} ${size}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineWidth=Math.max(2,size/7);ctx.strokeStyle='#17233b';ctx.strokeText(str,x,y+2);ctx.fillStyle=color;ctx.fillText(str,x,y);}
+function poly(points,fill,stroke=null,lw=1){ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.lineWidth=lw;ctx.strokeStyle=stroke;ctx.stroke();}}
+function drawSky(t) {
+  const th=themes[level?level.theme:'meadow'];
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,th.sky1);g.addColorStop(1,th.sky2);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  if(level&&level.theme==='cave'){
+    // Cave glows and stalactites.
+    for(let i=0;i<18;i++){const x=((i*113-cameraX*.12)% (W+100)+W+100)%(W+100)-30;const y=(i%4)*18;poly([[x,y],[x+10,y],[x+6,y+24+(i%3)*8]],i%2?'#222d49':'#2b3550');}
+    for(let i=0;i<11;i++){const x=(i*99+22-cameraX*.22%(W+80));ctx.fillStyle=i%2?'#60c9e6':'#87a6ff';ctx.globalAlpha=.16;ctx.beginPath();ctx.arc((x+W)%W,210+(i%4)*62,22+(i%3)*8,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+  } else {
+    // Parallax clouds.
+    for(let i=0;i<8;i++){
+      const x=(((i*167-cameraX*.18+t*5)%(W+180))+W+180)%(W+180)-90;const y=65+(i%4)*47;
+      ctx.globalAlpha=level&&level.theme==='sky'?.86:.48;ctx.fillStyle=th.cloud;
+      ctx.fillRect(x,y+12,76,18);ctx.fillRect(x+13,y,28,28);ctx.fillRect(x+38,y+5,27,24);ctx.globalAlpha=1;
+    }
+    // Distant ridges.
+    for(let layer=0;layer<2;layer++){
+      const yy=340+layer*55, par=(cameraX*(layer?.28:.13))%280;
+      ctx.fillStyle=layer?th.near:th.far;ctx.globalAlpha=layer?.55:.45;ctx.beginPath();ctx.moveTo(0,H);ctx.lineTo(0,yy);
+      for(let x=-300-par;x<W+350;x+=280){ctx.quadraticCurveTo(x+65,yy-65-layer*15,x+140,yy);ctx.quadraticCurveTo(x+205,yy+38,x+280,yy-5);}
+      ctx.lineTo(W,H);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+    }
+  }
+  // Tiny twinkles in sky and cave.
+  if(level&&level.theme!=='meadow')for(let i=0;i<34;i++){const x=((i*83-cameraX*.08)%W+W)%W,y=55+(i*47%300);ctx.fillStyle='#ffffff';ctx.globalAlpha=.25+.25*Math.sin(t*2+i);ctx.fillRect(x,y,2,2);}ctx.globalAlpha=1;
+}
+function drawPlatform(p) {
+  const th=themes[level.theme], x=Math.round(p.x-cameraX), y=Math.round(p.y);
+  if(x+p.w<-5||x>W+5)return;
+  // Main block and layered strata.
+  ctx.fillStyle=th.edge;ctx.fillRect(x,y,p.w,p.h);
+  ctx.fillStyle=th.soil;ctx.fillRect(x+2,y+4,p.w-4,Math.max(0,p.h-6));
+  ctx.fillStyle=th.soil2;ctx.fillRect(x+3,y+8,p.w-6,Math.max(0,p.h-10));
+  for(let sx=0;sx<p.w;sx+=20){const sy=y+13+(Math.floor((sx/20)+p.baseX/12)%2)*8;ctx.fillStyle=th.soil;ctx.fillRect(x+5+sx,sy,8,4);ctx.fillStyle='#fff4d2';ctx.globalAlpha=.18;ctx.fillRect(x+8+sx,sy+1,3,2);ctx.globalAlpha=1;}
+  if(p.kind==='ground'||level.theme==='meadow'){
+    ctx.fillStyle=th.top2;ctx.fillRect(x,y,p.w,7);ctx.fillStyle=th.top;ctx.fillRect(x+2,y,p.w-4,4);
+    for(let sx=5;sx<p.w-4;sx+=16){ctx.fillStyle=th.top2;ctx.fillRect(x+sx,y+4,5,3);ctx.fillStyle=th.top;ctx.fillRect(x+sx+3,y+2,4,3);}
+  } else {
+    ctx.fillStyle=th.edge;ctx.fillRect(x,y,p.w,7);ctx.fillStyle=th.top;ctx.fillRect(x+2,y+1,p.w-4,4);ctx.fillStyle=th.top2;ctx.fillRect(x+2,y+5,p.w-4,2);
+    for(let sx=7;sx<p.w-4;sx+=22){ctx.fillStyle='#fff';ctx.globalAlpha=.20;ctx.fillRect(x+sx,y+9,8,5);ctx.globalAlpha=1;}
+  }
+  if(p.kind==='moving'){ctx.fillStyle='#fff3a4';ctx.globalAlpha=.7;ctx.fillRect(x+8,y-4,Math.max(6,p.w-16),2);ctx.globalAlpha=1;}
+}
+function drawCoin(c,t) {
+  if(c.taken)return;const x=Math.round(c.x-cameraX),y=Math.round(c.y+Math.sin(t*4+c.phase)*3);if(x<-30||x>W+30)return;
+  ctx.save();ctx.translate(x,y);const spin=Math.abs(Math.cos(t*5+c.phase));const ww=Math.max(4,Math.round(13*spin));
+  poly([[-ww,-8],[0,-12],[ww,-8],[ww,4],[0,10],[-ww,4]],themes[level.theme].edge);
+  poly([[-ww+2,-7],[0,-10],[ww-2,-7],[ww-2,3],[0,7],[-ww+2,3]],themes[level.theme].coin);
+  if(ww>6){ctx.fillStyle=themes[level.theme].coin2;ctx.fillRect(-2,-6,4,9);ctx.fillRect(-4,-3,8,3);}ctx.restore();
+}
+function drawHazard(h) {
+  const x=h.x-cameraX,y=h.y; if(x+h.w<0||x>W)return;
+  const n=Math.max(2,Math.floor(h.w/14));for(let i=0;i<n;i++){const x1=x+i*h.w/n,x2=x+(i+1)*h.w/n;poly([[x1,y+h.h],[x1+(x2-x1)*.5,y],[x2,y+h.h]],'#f36b78','#592e4d',2);ctx.fillStyle='#ffd7b0';ctx.fillRect(x1+(x2-x1)*.48,y+5,2,5);}
+}
+function drawEnemy(e,t) {
+  const x=Math.round(e.x-cameraX),y=Math.round(e.y+Math.sin(t*7+e.phase)*2);if(x<-40||x>W+40)return;
+  // A cheeky little slime patrol.
+  ctx.fillStyle='#243149';ctx.fillRect(x+3,y+e.h-2,e.w-5,4);
+  ctx.fillStyle=level.theme==='cave'?'#a5b4d8':level.theme==='sky'?'#ff9d9d':'#ff8d76';ctx.fillRect(x+2,y+7,e.w-4,e.h-7);ctx.fillRect(x+6,y+3,e.w-12,7);ctx.fillRect(x,y+13,3,6);ctx.fillRect(x+e.w-3,y+13,3,6);
+  ctx.fillStyle='#fff';ctx.fillRect(x+7,y+7,5,7);ctx.fillRect(x+17,y+7,5,7);ctx.fillStyle='#17233b';ctx.fillRect(x+9+(e.dir<0?-1:1),y+10,3,4);ctx.fillRect(x+19+(e.dir<0?-1:1),y+10,3,4);
+  ctx.fillStyle='#d95b69';ctx.fillRect(x+12,y+17,6,2);
+}
+function drawFrog(t) {
+  const x=Math.round(player.x-cameraX), y=Math.round(player.y);
+  if(invincible>0&&Math.floor(invincible*12)%2===0)return;
+  const running=player.onGround&&Math.abs(player.vx)>30;
+  const frame=!player.onGround?3:(running?(Math.floor(t*12)%2===0?1:2):0);
+  const bob=player.onGround&&!running?Math.sin(player.anim)*Math.min(1.5,Math.abs(player.vx)/90):0;
+  // Soft shadow remains separate, so the PNG itself has a truly transparent background.
+  ctx.globalAlpha=.22;ctx.fillStyle='#18243e';ctx.fillRect(x+2,y+player.h-1,player.w-4,5);ctx.globalAlpha=1;
+  if(frogSheet.complete&&frogSheet.naturalWidth>=128){
+    const drawY=Math.round(y+bob);
+    ctx.save();
+    if(player.face<0){
+      ctx.translate(x+player.w,0);ctx.scale(-1,1);
+      ctx.drawImage(frogSheet,frame*32,0,32,32,0,drawY,player.w,player.h);
+    } else {
+      ctx.drawImage(frogSheet,frame*32,0,32,32,x,drawY,player.w,player.h);
+    }
+    ctx.restore();
+  } else {
+    // Procedural fallback in case the asset file is moved or unavailable.
+    ctx.fillStyle='#185d45';ctx.fillRect(x+2,y+17+bob,8,10);ctx.fillRect(x+18,y+17+bob,8,10);
+    ctx.fillStyle='#4acb72';ctx.fillRect(x+2,y+8+bob,24,16);ctx.fillRect(x+5,y+4+bob,18,19);ctx.fillRect(x+1,y+11+bob,26,10);
+    ctx.fillStyle='#7df28a';ctx.fillRect(x+6,y+6+bob,16,13);ctx.fillRect(x+8,y+5+bob,5,7);
+    ctx.fillStyle='#1d754f';ctx.fillRect(x+2,y+3+bob,9,10);ctx.fillRect(x+17,y+3+bob,9,10);
+    ctx.fillStyle='#f8fff0';ctx.fillRect(x+4,y+1+bob,7,8);ctx.fillRect(x+18,y+1+bob,7,8);
+    ctx.fillStyle='#152941';const pupilOffset=player.face>0?2:0;ctx.fillRect(x+7+pupilOffset,y+3+bob,3,5);ctx.fillRect(x+19+pupilOffset,y+3+bob,3,5);
+    ctx.fillStyle='#24744c';ctx.fillRect(x+8,y+17+bob,13,3);
+    ctx.fillStyle='#e7ffae';ctx.fillRect(x+8,y+19+bob,3,2);ctx.fillRect(x+18,y+19+bob,3,2);
+  }
+}
+function drawFlag() {
+  const x=level.goalX-cameraX,y=275;
+  ctx.fillStyle='#2a3450';ctx.fillRect(x,y,6,190);ctx.fillStyle='#7c8daa';ctx.fillRect(x+2,y,2,190);
+  poly([[x+6,y+4],[x+45,y+4],[x+35,y+19],[x+45,y+34],[x+6,y+34]],'#67e58b','#183b46',2);
+  ctx.fillStyle='#fff1a3';ctx.fillRect(x+6,y+4,5,4);
+  ctx.fillStyle='#25344e';ctx.fillRect(x-13,y+190,34,6);ctx.fillStyle='#fff';ctx.globalAlpha=.3;ctx.fillRect(x-10,y+191,29,2);ctx.globalAlpha=1;
+}
+function drawCheckpoint(cp) {
+  const x=cp.x-cameraX,y=cp.y;if(x<-30||x>W+30)return;
+  ctx.fillStyle='#344259';ctx.fillRect(x-2,y-40,4,42);ctx.fillStyle=cp.used?'#6af0ae':'#ffc85d';ctx.fillRect(x+2,y-38,17,15);ctx.fillRect(x+2,y-23,9,5);ctx.fillStyle='#fff3c4';ctx.fillRect(x+3,y-37,5,3);
+  if(!cp.used){ctx.globalAlpha=.2+.15*Math.sin(elapsed*5);ctx.fillStyle='#a8ffbd';ctx.beginPath();ctx.arc(x+7,y-20,19,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+}
+function drawDecoration(d,t) {
+  const x=d.x-cameraX,y=d.y;if(x<-30||x>W+30)return;
+  if(d.type==='flower'||d.type==='cloudflower'){
+    ctx.fillStyle='#2a7856';ctx.fillRect(x,y,3,14);ctx.fillRect(x-5,y+7,6,3);ctx.fillStyle=d.type==='cloudflower'?'#fff5a4':'#fff2f0';ctx.fillRect(x-5,y-3,5,5);ctx.fillRect(x+3,y-3,5,5);ctx.fillRect(x-1,y-7,5,5);ctx.fillRect(x-1,y+1,5,5);ctx.fillStyle='#ffbf55';ctx.fillRect(x,y-2,3,3);
+  } else if(d.type==='crystal') {
+    poly([[x,y-22],[x+8,y-10],[x+4,y],[x-3,y],[x-7,y-10]],'#70cce9','#263d65',2);ctx.fillStyle='#e5fbff';ctx.fillRect(x-1,y-17,3,12);
+  }
+}
+function drawWorld(t) {
+  drawSky(t);
+  // Subtle pixel particles drifting in the atmosphere.
+  for(let i=0;i<28;i++){const x=((i*71-cameraX*.36+t*(8+i%3))%W+W)%W,y=120+(i*53%300);ctx.globalAlpha=.15+.12*Math.sin(t*2+i);ctx.fillStyle='#ffffff';ctx.fillRect(x,y,2,2);}ctx.globalAlpha=1;
+  for(const d of level.decorations)drawDecoration(d,t);
+  for(const p of level.platforms)drawPlatform(p);
+  for(const h of level.hazards)drawHazard(h);
+  for(const cp of level.checkpoints)drawCheckpoint(cp);
+  for(const c of level.coins)drawCoin(c,t);
+  for(const e of level.enemies)drawEnemy(e,t);
+  drawFlag();drawFrog(t);
+  for(const p of particles){ctx.globalAlpha=clamp(p.life/p.max,0,1);ctx.fillStyle=p.color;ctx.fillRect(Math.round(p.x-cameraX),Math.round(p.y),p.size,p.size);}ctx.globalAlpha=1;
+  for(const a of floatTexts){ctx.globalAlpha=clamp(a.life,0,1);text(a.text,a.x-cameraX,a.y,13,a.color,'center','900');}ctx.globalAlpha=1;
+}
+function drawHud() {
+  roundedRect(18,16,924,54,13,'#14253bd9','#ffffff26',1);
+  // Score badge
+  roundedRect(30,25,155,34,9,'#243b57','#6f8da8',1);text('PONTOS',43,36,10,'#a7c8de');text(String(score).padStart(4,'0'),174,44,19,'#fff0a5','right');
+  text(`FASE ${levelIndex+1}/3`,215,43,14,'#d9efff');text(level.name.toUpperCase(),300,43,13,'#ffffff');
+  // 3 heart/life icons
+  text('VIDAS',690,43,10,'#b4cbe0');for(let i=0;i<3;i++){drawHeart(739+i*24,42,i<lives,i);}
+  const remaining=level.coins.filter(c=>!c.taken).length;text(`${remaining} RESTANTES`,925,43,10,'#c5e7fa','right');
+  // Progress meter
+  roundedRect(20,79,920,6,3,'#152a42aa',null);const progress=clamp((player.x+player.w)/(level.goalX+30),0,1);roundedRect(20,79,920*progress,6,3,'#8bf2aa',null);
+}
+function drawHeart(cx,cy,filled,index) {
+  const col=filled?'#ff7d91':'#4e5b71';poly([[cx-8,cy-2],[cx-8,cy-6],[cx-4,cy-9],[cx,cy-5],[cx+4,cy-9],[cx+8,cy-6],[cx+8,cy-2],[cx,cy+7]],col,filled?'#632f4c':'#344259',1.5);if(filled){ctx.fillStyle='#ffc6ce';ctx.fillRect(cx-4,cy-6,3,2);}
+}
+function drawButton(x,y,w,h,label,action,style='primary') {
+  const hover=mouse.x>=x&&mouse.x<=x+w&&mouse.y>=y&&mouse.y<=y+h;
+  const fill=style==='primary'?(hover?'#c6ffd0':'#93f0aa'):(hover?'#3f5f84':'#2b4364');
+  const fg=style==='primary'?'#15334a':'#f0f7ff';
+  roundedRect(x,y+(hover?-2:0),w,h,10,fill,style==='primary'?'#e4ffde':'#6e8fb0',2);
+  if(style==='primary'){ctx.fillStyle='#65c982';ctx.fillRect(x+7,y+h-5,w-14,3);}
+  text(label,x+w/2,y+h/2+(hover?-2:0),15,fg,'center','900');buttons.push({x,y,w,h,action});
+}
+function drawPanel() {ctx.fillStyle='#07142a9c';ctx.fillRect(0,0,W,H);}
+function drawMenu(t) {
+  drawSky(t);
+  // decorative land strip and bubbles
+  ctx.fillStyle='#255f70';ctx.fillRect(0,440,W,100);ctx.fillStyle='#5fd58a';ctx.fillRect(0,435,W,9);
+  for(let i=0;i<24;i++){const x=(i*47+t*15)%W;ctx.fillStyle=i%2?'#f9d66e':'#eaf7ff';ctx.globalAlpha=.7;ctx.fillRect(x,436+(i%3)*2,7,3);}ctx.globalAlpha=1;
+  drawMenuFrog(150,404+Math.sin(t*2)*2,1.2,t);
+  drawMenuFrog(790,416+Math.sin(t*2+1)*2,.8,t);
+  text('SALTO DO',W/2,112,24,'#d9f4ff','center','900');
+  text('SAPINHO!',W/2,164,51,'#a2ffb2','center','900');
+  text('COLETE MOEDAS. DESVIE DOS PERIGOS. CHEGUE À BANDEIRA.',W/2,207,12,'#f6fcff','center','800');
+  buttons=[];
+  drawButton(344,257,272,51,'JOGAR CAMPANHA',()=>beginCampaign(),'primary');
+  drawButton(344,320,272,43,'COMO JOGAR',()=>state='instructions','secondary');
+  drawButton(344,375,272,43,'SELECIONAR FASE',()=>state='levelselect','secondary');
+  text('3 FASES  •  CHECKPOINTS  •  DESAFIOS',W/2,480,11,'#e5f6ff','center','800');
+}
+function drawMenuFrog(x,y,s=1,t=0) {
+  const size=48*s;
+  const bob=Math.sin(t*2.8+x*.01)*1.4*s;
+  // A small soft shadow keeps the sprite grounded on the menu platforms.
+  ctx.save();ctx.globalAlpha=.22;ctx.fillStyle='#14253b';ctx.beginPath();ctx.ellipse(x,y+32*s,15*s,3*s,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  if(frogSheet.complete&&frogSheet.naturalWidth>=128) {
+    // Mostly idle, with occasional running frames for a little life in the menu.
+    const active=Math.sin(t*2.4+x*.013)>.72;
+    const frame=active?1+(Math.floor(t*5+x*.02)%2):0;
+    ctx.drawImage(frogSheet,frame*32,0,32,32,x-size/2,y-16*s+bob,size,size);
+  } else if(frogIdle.complete&&frogIdle.naturalWidth) {
+    ctx.drawImage(frogIdle,0,0,32,32,x-size/2,y-16*s+bob,size,size);
+  } else {
+    // Temporary fallback while local PNG assets are loading.
+    ctx.fillStyle='#185d45';ctx.fillRect(x-22*s,y+10*s,44*s,22*s);
+    ctx.fillStyle='#4acb72';ctx.fillRect(x-22*s,y-2*s,44*s,27*s);
+    ctx.fillStyle='#f8fff0';ctx.fillRect(x-17*s,y-14*s,13*s,15*s);ctx.fillRect(x+4*s,y-14*s,13*s,15*s);
+    ctx.fillStyle='#152941';ctx.fillRect(x-13*s,y-10*s,5*s,8*s);ctx.fillRect(x+8*s,y-10*s,5*s,8*s);
+  }
+  ctx.restore();
+}
+function drawInstructions(t) {
+  drawMenu(t);drawPanel();roundedRect(180,92,600,350,18,'#142741f5','#81a2c7',2);
+  text('COMO JOGAR',W/2,132,24,'#a4f6b5','center');
+  text('A / D ou ← / →',W/2,188,17,'#ffffff','center');text('Mover o sapinho',W/2,211,12,'#b8cee5','center','700');
+  text('ESPAÇO / W / ↑',W/2,254,17,'#ffffff','center');text('Pular entre plataformas',W/2,277,12,'#b8cee5','center','700');
+  text('P ou ESC',W/2,320,17,'#ffffff','center');text('Pausar a aventura',W/2,343,12,'#b8cee5','center','700');
+  text('Colete moedas (+10), use checkpoints e evite espinhos e slimes.',W/2,374,11,'#ffe6a0','center','700');
+  buttons=[];drawButton(360,395,240,38,'VOLTAR AO MENU',()=>state='menu','primary');
+}
+function drawLevelSelect(t) {
+  drawMenu(t);drawPanel();roundedRect(126,75,708,390,18,'#142741f5','#81a2c7',2);text('ESCOLHA SUA FASE',W/2,111,23,'#a4f6b5','center');buttons=[];
+  const cards=[{x:158,name:'01 • BOSQUE',desc:'Aprenda os saltos',col:'#5cd78b'},{x:386,name:'02 • CAVERNA',desc:'Plataformas móveis',col:'#9bb5e7'},{x:614,name:'03 • NUVENS',desc:'O maior desafio',col:'#ffcf8c'}];
+  cards.forEach((c,i)=>{roundedRect(c.x,151,188,190,12,'#263a58','#536f94',2);roundedRect(c.x+14,168,160,80,8,c.col);for(let j=0;j<5;j++){ctx.fillStyle='#ffffff26';ctx.fillRect(c.x+22+j*29,183+(j%2)*11,15,4);}drawMenuFrog(c.x+94,216,.7,t);text(c.name,c.x+94,273,12,'#ffffff','center');text(c.desc,c.x+94,294,10,'#c5d8ef','center','700');drawButton(c.x+15,307,158,26,'JOGAR FASE',()=>{score=0;lives=3;deaths=0;runCoins=0;loadLevel(i);state='playing';},'primary');});
+  drawButton(356,382,248,42,'VOLTAR AO MENU',()=>state='menu','secondary');
+}
+function drawOverlay(title,subtitle,opts) {
+  drawPanel();roundedRect(235,122,490,302,18,'#142741f4','#85a5c7',2);
+  text(title,W/2,172,29,'#a5f5b5','center','900');text(subtitle,W/2,213,12,'#d3e4f5','center','700');
+  buttons=[];let y=252;for(const b of opts){drawButton(335,y,290,42,b.label,b.action,b.style||'secondary');y+=52;}
+}
+function render(t) {
+  buttons=[];
+  if(state==='menu')drawMenu(t);
+  else if(state==='instructions')drawInstructions(t);
+  else if(state==='levelselect')drawLevelSelect(t);
+  else if(level){drawWorld(t);drawHud();
+    if(state==='paused')drawOverlay('PAUSADO','Respire. A aventura fica congelada.',[
+      {label:'CONTINUAR',action:()=>state='playing',style:'primary'},
+      {label:'REINICIAR CAMPANHA',action:()=>restartCampaign()},
+      {label:'VOLTAR AO MENU',action:()=>state='menu'}
+    ]);
+    else if(state==='levelcomplete'){
+      const got=level.coins.filter(c=>c.taken).length,total=level.coins.length;
+      drawOverlay(levelIndex<2?'FASE CONCLUÍDA!':'ÚLTIMA FASE!',`${level.name} • ${got}/${total} moedas coletadas • Pontuação ${score}`,[
+        {label:levelIndex<2?'PRÓXIMA FASE →':'VER RESULTADO →',action:()=>nextLevel(),style:'primary'},
+        {label:'RECOMEÇAR CAMPANHA',action:()=>restartCampaign()},
+        {label:'MENU PRINCIPAL',action:()=>state='menu'}
+      ]);
+    } else if(state==='gameover')drawOverlay('FIM DE JOGO','Suas três vidas acabaram. Tente outra rota!',[
+      {label:'TENTAR NOVAMENTE',action:()=>restartCampaign(),style:'primary'},
+      {label:'MENU PRINCIPAL',action:()=>state='menu'}
+    ]);
+    else if(state==='win')drawOverlay('VOCÊ CONSEGUIU!','O sapinho chegou ao fim da aventura!',[
+      {label:`JOGAR NOVAMENTE • ${score} PONTOS`,action:()=>restartCampaign(),style:'primary'},
+      {label:'MENU PRINCIPAL',action:()=>state='menu'}
+    ]);
+  }
+}
+function frame(now) {
+  const dt=Math.min(.033,(now-lastTimestamp)/1000||0);lastTimestamp=now;
+  if(state==='playing')update(dt);
+  render(now/1000);
+  justPressed.clear();requestAnimationFrame(frame);
+}
+function canvasPoint(e) {const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
+canvas.addEventListener('pointermove',e=>{mouse=canvasPoint(e);});
+canvas.addEventListener('pointerdown',e=>{mouse=canvasPoint(e);canvas.focus();});
+canvas.addEventListener('click',e=>{const p=canvasPoint(e);for(let i=buttons.length-1;i>=0;i--){const b=buttons[i];if(p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y&&p.y<=b.y+b.h){b.action();break;}}});
+window.addEventListener('keydown',e=>{
+  const code=e.code;
+  if(['ArrowLeft','ArrowRight','ArrowUp','Space'].includes(code))e.preventDefault();
+  if(!keys.has(code))justPressed.add(code);keys.add(code);
+  if(e.repeat)return;
+  if(code==='KeyR'){restartCampaign();return;}
+  if(code==='Escape'||code==='KeyP'){
+    if(state==='playing')state='paused';else if(state==='paused')state='playing';else if(state==='instructions'||state==='levelselect')state='menu';return;
+  }
+  if(code==='Enter'){
+    if(state==='menu')beginCampaign();else if(state==='paused')state='playing';else if(state==='instructions'||state==='levelselect')state='menu';else if(state==='levelcomplete')nextLevel();else if(state==='gameover'||state==='win')restartCampaign();
+  }
+});
+window.addEventListener('keyup',e=>keys.delete(e.code));
+window.addEventListener('blur',()=>{keys.clear();if(state==='playing')state='paused';});
+// Touch-friendly controls for small screens: left/right/jump pads appear while playing.
+let touchState={left:false,right:false,jump:false};
+canvas.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='touch'&&state==='playing'){
+    const p=canvasPoint(e);if(p.y>H-105){if(p.x<170){keys.add('ArrowLeft');touchState.left=true;}else if(p.x<315){keys.add('ArrowRight');touchState.right=true;}else if(p.x>W-170){keys.add('Space');justPressed.add('Space');touchState.jump=true;}}
+  }
+});
+canvas.addEventListener('pointerup',()=>{if(touchState.left)keys.delete('ArrowLeft');if(touchState.right)keys.delete('ArrowRight');if(touchState.jump)keys.delete('Space');touchState={left:false,right:false,jump:false};});
+canvas.addEventListener('pointercancel',()=>{keys.delete('ArrowLeft');keys.delete('ArrowRight');keys.delete('Space');touchState={left:false,right:false,jump:false};});
+// Draw soft translucent touch pads only on touch-enabled devices.
+const originalDrawHud=drawHud;
+// Keep touch UI part of the normal HUD via a render wrapper.
+const baseRender=render;
+render=function(t){baseRender(t);if(state==='playing'&&('ontouchstart'in window)&&W===960){
+  ctx.globalAlpha=.38;roundedRect(20,448,72,63,12,'#14253b','#dceeff',2);text('◀',56,480,25,'#ffffff','center');roundedRect(103,448,72,63,12,'#14253b','#dceeff',2);text('▶',139,480,25,'#ffffff','center');roundedRect(835,438,105,73,12,'#14253b','#dceeff',2);text('PULAR',887,474,13,'#ffffff','center');ctx.globalAlpha=1;
+}};
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
