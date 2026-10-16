@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#14253b">
-<meta name="description" content="MushyFrog: uma aventura de plataforma em pixel art com exploração, habilidades, chefes e seis fases.">
+<meta name="description" content="MushyFrog: uma aventura de plataforma em pixel art com exploração, habilidades, subfases, três chefes e dez fases.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MushyFrog">
@@ -66,7 +66,7 @@
   <div class="topline">
     <div class="brand"><span class="brand-mark"><img src="assets/frog-idle.png" alt=""></span><span>MUSHYFROG <span style="color:#8ee7ac">PIXEL QUEST</span></span></div>
     <div class="top-actions">
-      <div class="tip">UMA AVENTURA DE PLATAFORMA • 6 FASES</div>
+      <div class="tip">UMA AVENTURA DE PLATAFORMA • 10 FASES</div>
       <button class="install-button" id="install-app" type="button" hidden>INSTALAR JOGO</button>
     </div>
   </div>
@@ -77,6 +77,7 @@
         <div class="move-pad">
           <button class="touch-btn" type="button" data-touch="ArrowLeft" aria-label="Mover para a esquerda">◀</button>
           <button class="touch-btn" type="button" data-touch="ArrowRight" aria-label="Mover para a direita">▶</button>
+          <button class="touch-btn" type="button" data-touch="ArrowDown" aria-label="Entrar ou sair da tubulação">▼</button>
         </div>
         <button class="touch-btn jump-btn" type="button" data-touch="Space" aria-label="Pular">PULAR</button>
         <div class="mobile-top-controls">
@@ -110,7 +111,11 @@ const themes = {
   sky:    { sky1:'#3989df', sky2:'#a5e5ff', far:'#8ec9d5', near:'#5eabc7', soil:'#c9784d', soil2:'#f6bf8c', top:'#ffdfa0', top2:'#f4ad7b', edge:'#714b54', coin:'#ffc747', coin2:'#ffec88', cloud:'#fffdf2' },
   swamp:  { sky1:'#243f55', sky2:'#638b78', far:'#456b64', near:'#294d4e', soil:'#725044', soil2:'#a87551', top:'#64bb78', top2:'#32835c', edge:'#263e43', coin:'#f4df66', coin2:'#fff4ad', cloud:'#c4e6d5' },
   ruins:  { sky1:'#34365f', sky2:'#7b87bb', far:'#6b709d', near:'#414c78', soil:'#756b83', soil2:'#afa4b7', top:'#b8e6bd', top2:'#6dbd97', edge:'#313854', coin:'#ffca59', coin2:'#fff1a0', cloud:'#e3e4ff' },
-  heart:  { sky1:'#211c3c', sky2:'#633e70', far:'#4f355d', near:'#2c294b', soil:'#59445f', soil2:'#9b6881', top:'#ee7599', top2:'#a64275', edge:'#201d3a', coin:'#ffe16d', coin2:'#fff6b0', cloud:'#e4c8ff' }
+  heart:  { sky1:'#211c3c', sky2:'#633e70', far:'#4f355d', near:'#2c294b', soil:'#59445f', soil2:'#9b6881', top:'#ee7599', top2:'#a64275', edge:'#201d3a', coin:'#ffe16d', coin2:'#fff6b0', cloud:'#e4c8ff' },
+  forge:  { sky1:'#261b35', sky2:'#9a4549', far:'#6b354e', near:'#3e2945', soil:'#583849', soil2:'#a6574e', top:'#ffb35a', top2:'#e66b43', edge:'#2c2036', coin:'#ffe16d', coin2:'#fff6b0', cloud:'#ffc28a' },
+  moon:   { sky1:'#20264b', sky2:'#8d84c6', far:'#626ca4', near:'#414c78', soil:'#605a91', soil2:'#9d9acb', top:'#b1f1d3', top2:'#69c5b2', edge:'#2c315c', coin:'#ffe779', coin2:'#fff8ba', cloud:'#ebe7ff' },
+  drowned:{ sky1:'#123c54', sky2:'#56a8b3', far:'#2e7585', near:'#1e5369', soil:'#365b72', soil2:'#56889b', top:'#77dbcb', top2:'#3ea99e', edge:'#15364d', coin:'#ffe779', coin2:'#fff8ba', cloud:'#b9f4e9' },
+  summit: { sky1:'#2d4a76', sky2:'#c8e7f5', far:'#789dbd', near:'#4c7296', soil:'#788da3', soil2:'#b9d0df', top:'#e3f6ff', top2:'#9fd7e8', edge:'#344c6d', coin:'#ffe779', coin2:'#fff8ba', cloud:'#ffffff' }
 };
 
 function plat(x,y,w,h=20,kind='normal',extra={}) { return {x,y,w,h,kind,baseX:x,baseY:y,prevX:x,prevY:y, ...extra}; }
@@ -118,7 +123,7 @@ function enemy(x,y,minX,maxX,speed=75) { return {x,y,w:28,h:23,minX,maxX,speed,d
 function coin(x,y) { return {x,y,r:10,taken:false,phase:Math.random()*6}; }
 const levels = [
   {
-    name:'Bosque Saltitante', subtitle:'O começo da aventura', theme:'meadow', worldW:2700, spawn:{x:46,y:420}, goalX:2590,
+    name:'Bosque Saltitante', subtitle:'O começo da aventura', theme:'meadow', musicTrack:'grove', worldW:2700, spawn:{x:46,y:420}, goalX:2590,
     platforms:[
       plat(0,470,520,70,'ground'), plat(625,445,350,95,'ground'), plat(1080,470,420,70,'ground'), plat(1610,435,360,105,'ground'), plat(2075,465,625,75,'ground'),
       plat(235,385,115),plat(390,328,108),plat(740,360,108),plat(865,305,100),plat(1160,385,118),plat(1350,327,112),plat(1680,360,105),plat(1830,305,108),plat(2200,375,118),plat(2380,325,112)
@@ -127,10 +132,11 @@ const levels = [
     hazards:[{x:300,y:448,w:55,h:22},{x:685,y:423,w:42,h:22},{x:1240,y:448,w:50,h:22},{x:1750,y:413,w:48,h:22},{x:2285,y:443,w:54,h:22}],
     enemies:[enemy(410,447,365,500,72),enemy(1300,447,1120,1450,85),enemy(2140,442,2100,2440,88)],
     movers:[], checkpoints:[{x:1648,y:435}],
-    decorations:[{x:150,y:450,type:'flower'},{x:560,y:425,type:'flower'},{x:1030,y:435,type:'flower'},{x:1550,y:440,type:'flower'},{x:2020,y:430,type:'flower'}]
+    decorations:[{x:150,y:450,type:'flower'},{x:560,y:425,type:'flower'},{x:1030,y:435,type:'flower'},{x:1550,y:440,type:'flower'},{x:2020,y:430,type:'flower'}],
+    pipes:[{x:140,floorY:470,roomId:'mushroom-grotto'}]
   },
   {
-    name:'Caverna Cristalina', subtitle:'Pule com precisão', theme:'cave', worldW:3020, spawn:{x:44,y:410}, goalX:2900,
+    name:'Caverna Cristalina', subtitle:'Pule com precisão', theme:'cave', musicTrack:'crystal', worldW:3020, spawn:{x:44,y:410}, goalX:2900,
     platforms:[
       plat(0,460,330,80,'ground'),plat(435,425,300,115,'ground'),plat(815,460,305,80,'ground'),plat(1200,405,350,135,'ground'),plat(1630,450,335,90,'ground'),plat(2040,415,335,125,'ground'),plat(2475,460,545,80,'ground'),
       plat(210,365,100),plat(355,315,92),plat(555,355,100),plat(690,300,92),plat(900,360,100),plat(1040,305,92),plat(1285,340,105),plat(1430,285,105),plat(1700,360,105),plat(1850,310,95),plat(2110,350,105),plat(2260,295,105),plat(2540,365,100),plat(2680,315,105),
@@ -139,22 +145,24 @@ const levels = [
     coins:[coin(235,330),coin(380,280),coin(485,390),coin(580,320),coin(715,265),coin(855,425),coin(930,325),coin(1065,270),coin(1310,305),coin(1455,250),coin(1568,368),coin(1730,325),coin(1880,275),coin(1985,395),coin(2140,315),coin(2290,260),coin(2405,385),coin(2565,330),coin(2705,280),coin(2820,420)],
     hazards:[{x:260,y:438,w:42,h:22},{x:500,y:403,w:54,h:22},{x:875,y:438,w:45,h:22},{x:1330,y:383,w:52,h:22},{x:1770,y:428,w:48,h:22},{x:2160,y:393,w:54,h:22},{x:2595,y:438,w:45,h:22}],
     enemies:[enemy(455,402,440,700,105),enemy(1220,382,1210,1510,105),enemy(2070,392,2050,2330,115),enemy(2510,437,2490,2860,120)],
-    movers:[], checkpoints:[{x:1660,y:450},{x:2315,y:295}], decorations:[{x:170,y:440,type:'crystal'},{x:790,y:445,type:'crystal'},{x:1135,y:445,type:'crystal'},{x:1990,y:435,type:'crystal'}]
+    movers:[], checkpoints:[{x:1660,y:450},{x:2315,y:295}], decorations:[{x:170,y:440,type:'crystal'},{x:790,y:445,type:'crystal'},{x:1135,y:445,type:'crystal'},{x:1990,y:435,type:'crystal'}],
+    pipes:[{x:835,floorY:460,roomId:'crystal-vault'}]
   },
   {
-    name:'Arquipélago das Nuvens', subtitle:'A última e maior prova', theme:'sky', worldW:3400, spawn:{x:40,y:410}, goalX:3280,
+    name:'Arquipélago das Nuvens', subtitle:'Derrote o Senhor das Tempestades', theme:'sky', musicTrack:'sky', worldW:3400, spawn:{x:40,y:410}, goalX:3280,
     platforms:[
       plat(0,460,255,80,'ground'),plat(405,450,190,90,'ground'),plat(765,430,185,110,'ground'),plat(1120,460,185,80,'ground'),plat(1485,435,190,105,'ground'),plat(1860,460,185,80,'ground'),plat(2230,430,185,110,'ground'),plat(2600,455,170,85,'ground'),plat(2925,460,475,80,'ground'),
       plat(205,385,100),plat(315,325,92),plat(515,365,94),plat(630,305,95),plat(875,350,90),plat(995,290,95),plat(1220,370,92),plat(1340,310,95),plat(1595,350,95),plat(1715,290,95),plat(1955,365,92),plat(2070,305,95),plat(2320,350,95),plat(2435,290,95),plat(2690,365,95),plat(2805,305,95),
       plat(705,370,78,18,'moving',{moveY:55,speed:1.4,phase:0.4}),plat(1785,350,80,18,'moving',{moveY:48,speed:1.8,phase:2.6}),plat(2515,360,78,18,'moving',{moveX:65,speed:1.3,phase:1.8})
     ],
     coins:[coin(230,350),coin(340,290),coin(540,330),coin(655,270),coin(800,395),coin(900,315),coin(1020,255),coin(1150,425),coin(1245,330),coin(1365,275),coin(1510,395),coin(1620,310),coin(1740,255),coin(1890,425),coin(1980,325),coin(2095,270),coin(2250,390),coin(2345,310),coin(2460,255),coin(2630,415),coin(2715,325),coin(2830,270),coin(3000,420),coin(3150,420),coin(3260,385)],
-    hazards:[{x:455,y:428,w:42,h:22},{x:815,y:408,w:45,h:22},{x:1170,y:438,w:48,h:22},{x:1530,y:413,w:50,h:22},{x:1900,y:438,w:50,h:22},{x:2275,y:408,w:48,h:22},{x:2640,y:433,w:45,h:22},{x:3015,y:438,w:48,h:22}],
-    enemies:[enemy(430,427,415,555,120),enemy(790,407,775,925,125),enemy(1510,412,1500,1640,130),enemy(2260,407,2245,2390,135),enemy(2950,437,2940,3200,140)],
-    movers:[], checkpoints:[{x:1385,y:310},{x:2480,y:290}], decorations:[{x:120,y:440,type:'cloudflower'},{x:720,y:410,type:'cloudflower'},{x:1080,y:440,type:'cloudflower'},{x:1800,y:440,type:'cloudflower'},{x:2200,y:410,type:'cloudflower'}]
+    hazards:[{x:455,y:428,w:42,h:22},{x:815,y:408,w:45,h:22},{x:1170,y:438,w:48,h:22},{x:1530,y:413,w:50,h:22},{x:1900,y:438,w:50,h:22},{x:2275,y:408,w:48,h:22},{x:2640,y:433,w:45,h:22}],
+    enemies:[enemy(430,427,415,555,120),enemy(790,407,775,925,125),enemy(1510,412,1500,1640,130),enemy(2260,407,2245,2390,135)],
+    movers:[], checkpoints:[{x:1385,y:310},{x:2480,y:290}], decorations:[{x:120,y:440,type:'cloudflower'},{x:720,y:410,type:'cloudflower'},{x:1080,y:440,type:'cloudflower'},{x:1800,y:440,type:'cloudflower'},{x:2200,y:410,type:'cloudflower'}],
+    boss:{x:3000,y:396,w:74,h:64,minX:2960,maxX:3190,speed:58,dir:1,hp:3,maxHp:3,attackTimer:1.65,waves:[],type:'storm',label:'SENHOR DAS TEMPESTADES'}
   },
   {
-    name:'Pântano Corrompido', subtitle:'Cuidado com o chão instável', theme:'swamp', worldW:2940, spawn:{x:42,y:420}, goalX:2820,
+    name:'Pântano Corrompido', subtitle:'Cuidado com o chão instável', theme:'swamp', musicTrack:'swamp', worldW:2940, spawn:{x:42,y:420}, goalX:2820,
     platforms:[
       plat(0,470,370,70,'ground'),plat(465,445,300,95,'ground'),plat(865,465,275,75,'ground'),plat(1240,430,320,110,'ground'),plat(1660,465,300,75,'ground'),plat(2060,440,330,100,'ground'),plat(2485,465,455,75,'ground'),
       plat(190,385,100),plat(330,325,92,18,'crumble'),plat(515,350,95),plat(650,292,90,18,'bounce'),plat(915,360,92),plat(1055,305,90,18,'crumble'),plat(1300,345,100),plat(1440,285,95,18,'moving',{moveX:48,speed:1.35,phase:1.1}),plat(1710,355,95),plat(1845,295,92,18,'crumble'),plat(2110,355,98),plat(2255,300,95,18,'bounce'),plat(2555,360,95),plat(2690,305,95)
@@ -162,10 +170,11 @@ const levels = [
     coins:[coin(220,350),coin(360,290),coin(540,315),coin(695,255),coin(805,415),coin(940,325),coin(1095,265),coin(1190,410),coin(1330,310),coin(1475,250),coin(1590,390),coin(1740,320),coin(1885,255),coin(1985,415),coin(2140,320),coin(2285,260),coin(2400,405),coin(2580,325),coin(2720,270),coin(2860,420)],
     hazards:[{x:270,y:448,w:45,h:22},{x:560,y:423,w:44,h:22},{x:935,y:443,w:45,h:22},{x:1335,y:408,w:45,h:22},{x:1745,y:443,w:45,h:22},{x:2140,y:418,w:45,h:22},{x:2590,y:443,w:42,h:22}],
     enemies:[enemy(490,422,475,710,95),enemy(1270,407,1255,1510,110),enemy(2100,417,2080,2340,125),enemy(2530,442,2510,2810,130)],
-    movers:[], checkpoints:[{x:1260,y:430},{x:2080,y:440}], decorations:[{x:155,y:450,type:'flower'},{x:820,y:445,type:'crystal'},{x:1160,y:445,type:'flower'},{x:1990,y:445,type:'crystal'}]
+    movers:[], checkpoints:[{x:1260,y:430},{x:2080,y:440}], decorations:[{x:155,y:450,type:'flower'},{x:820,y:445,type:'crystal'},{x:1160,y:445,type:'flower'},{x:1990,y:445,type:'crystal'}],
+    pipes:[{x:30,floorY:470,roomId:'root-chamber'}]
   },
   {
-    name:'Ruínas Ancestrais', subtitle:'Encontre o caminho antigo', theme:'ruins', worldW:3150, spawn:{x:42,y:420}, goalX:3020,
+    name:'Ruínas Ancestrais', subtitle:'Encontre o caminho antigo', theme:'ruins', musicTrack:'ruins', worldW:3150, spawn:{x:42,y:420}, goalX:3020,
     platforms:[
       plat(0,470,320,70,'ground'),plat(420,450,280,90,'ground'),plat(795,470,260,70,'ground'),plat(1150,435,310,105,'ground'),plat(1550,465,280,75,'ground'),plat(1935,440,300,100,'ground'),plat(2340,465,280,75,'ground'),plat(2705,445,445,95,'ground'),
       plat(170,385,90),plat(300,325,92,18,'crumble'),plat(490,360,92),plat(610,295,92,18,'moving',{moveY:38,speed:1.6,phase:1.5}),plat(855,365,92),plat(980,305,92,18,'crumble'),plat(1200,345,95),plat(1340,282,90,18,'bounce'),plat(1600,355,95),plat(1730,295,90,18,'crumble'),plat(1980,350,95),plat(2115,288,95,18,'moving',{moveX:54,speed:1.4,phase:3}),plat(2390,355,95),plat(2515,295,92,18,'crumble'),plat(2760,350,95),plat(2890,295,95)
@@ -176,14 +185,169 @@ const levels = [
     movers:[], checkpoints:[{x:1170,y:435},{x:2355,y:465}], decorations:[{x:110,y:450,type:'crystal'},{x:755,y:450,type:'crystal'},{x:1510,y:445,type:'crystal'},{x:2300,y:440,type:'crystal'}]
   },
   {
-    name:'Coração do Pântano', subtitle:'Derrote o Guardião Corrompido', theme:'heart', worldW:1760, spawn:{x:45,y:431}, goalX:1650,
+    name:'Mina Fulgurante', subtitle:'Derrote o Escavador de Magma', theme:'forge', musicTrack:'forge', worldW:2820, spawn:{x:42,y:420}, goalX:2700,
+    platforms:[
+      plat(0,460,340,80,'ground'),plat(445,440,285,100,'ground'),plat(830,460,300,80,'ground'),plat(1220,430,305,110,'ground'),plat(1615,455,280,85,'ground'),plat(1990,435,300,105,'ground'),plat(2390,460,430,80,'ground'),
+      plat(220,365,92),plat(360,310,92,18,'bounce'),plat(530,350,95),plat(675,292,90,18,'moving',{moveY:34,speed:1.6,phase:1}),plat(920,360,95),plat(1060,300,90,18,'crumble'),plat(1310,345,95),plat(1450,285,95,18,'bounce'),plat(1690,350,95),plat(1830,295,95,18,'moving',{moveX:42,speed:1.4,phase:2}),plat(2070,350,95),plat(2220,292,92,18,'crumble'),plat(2470,355,95),plat(2585,310,95)
+    ],
+    coins:[coin(245,330),coin(385,275),coin(555,315),coin(700,255),coin(945,325),coin(1085,265),coin(1335,310),coin(1475,250),coin(1715,315),coin(1855,260),coin(2095,315),coin(2245,255),coin(2495,320),coin(2620,275),coin(2760,420)],
+    hazards:[{x:470,y:418,w:45,h:22},{x:870,y:438,w:48,h:22},{x:1260,y:408,w:45,h:22},{x:1655,y:433,w:48,h:22},{x:2030,y:413,w:48,h:22}],
+    enemies:[enemy(470,417,455,700,110),enemy(1240,407,1230,1490,120),enemy(2020,412,2005,2245,135)], checkpoints:[{x:1235,y:430},{x:2005,y:435}],
+    decorations:[{x:130,y:450,type:'crystal'},{x:780,y:445,type:'crystal'},{x:1570,y:445,type:'crystal'},{x:2350,y:445,type:'crystal'}],
+    boss:{x:2440,y:396,w:78,h:64,minX:2395,maxX:2600,speed:82,dir:1,hp:4,maxHp:4,attackTimer:1.45,waves:[],type:'magma',label:'ESCAVADOR DE MAGMA'}
+  },
+  {
+    name:'Jardins da Lua', subtitle:'Plataformas vivas sob as estrelas', theme:'moon', musicTrack:'moon', worldW:2900, spawn:{x:42,y:420}, goalX:2760,
+    platforms:[
+      plat(0,470,390,70,'ground'),plat(495,445,270,95,'ground'),plat(865,465,270,75,'ground'),plat(1230,430,300,110,'ground'),plat(1630,460,275,80,'ground'),plat(2010,435,300,105,'ground'),plat(2410,465,490,75,'ground'),
+      plat(190,385,95),plat(330,325,92),plat(555,350,95),plat(690,295,90,18,'moving',{moveY:42,speed:1.2,phase:1.3}),plat(930,355,95),plat(1060,290,90,18,'bounce'),plat(1300,345,95),plat(1440,285,95),plat(1700,350,95),plat(1840,292,95,18,'crumble'),plat(2090,350,95),plat(2230,290,95,18,'moving',{moveX:44,speed:1.4,phase:0.8}),plat(2490,350,95),plat(2630,295,95)
+    ],
+    coins:[coin(215,350),coin(355,290),coin(580,315),coin(715,255),coin(955,320),coin(1085,250),coin(1325,305),coin(1465,245),coin(1725,310),coin(1865,250),coin(2115,310),coin(2255,250),coin(2515,310),coin(2655,255),coin(2800,420)],
+    hazards:[{x:530,y:423,w:42,h:22},{x:900,y:443,w:45,h:22},{x:1270,y:408,w:45,h:22},{x:1670,y:438,w:45,h:22},{x:2050,y:413,w:45,h:22},{x:2450,y:443,w:45,h:22}],
+    enemies:[enemy(520,422,510,715,90),enemy(1250,407,1240,1505,105),enemy(2040,412,2025,2225,115),enemy(2450,442,2430,2700,120)], checkpoints:[{x:1240,y:430},{x:2020,y:435}],
+    decorations:[{x:120,y:450,type:'flower'},{x:820,y:445,type:'crystal'},{x:1570,y:445,type:'flower'},{x:2330,y:445,type:'crystal'}],
+    pipes:[{x:45,floorY:470,roomId:'root-chamber'}]
+  },
+  {
+    name:'Cidade Afundada', subtitle:'Navegue pelas ruínas submersas', theme:'drowned', musicTrack:'drowned', worldW:3040, spawn:{x:42,y:420}, goalX:2900,
+    platforms:[
+      plat(0,470,350,70,'ground'),plat(455,445,280,95,'ground'),plat(835,465,285,75,'ground'),plat(1215,430,310,110,'ground'),plat(1620,460,280,80,'ground'),plat(2000,435,320,105,'ground'),plat(2425,465,615,75,'ground'),
+      plat(180,385,95),plat(315,325,92,18,'crumble'),plat(510,350,95),plat(650,292,92,18,'moving',{moveY:38,speed:1.5,phase:2}),plat(900,355,95),plat(1040,295,95,18,'crumble'),plat(1290,345,95),plat(1430,285,95),plat(1680,350,95,18,'bounce'),plat(1815,290,95),plat(2070,350,95),plat(2215,290,95,18,'moving',{moveX:52,speed:1.5,phase:1.1}),plat(2490,350,95),plat(2630,290,95),plat(2770,345,95)
+    ],
+    coins:[coin(205,350),coin(340,290),coin(535,315),coin(675,252),coin(925,320),coin(1065,255),coin(1315,305),coin(1455,245),coin(1705,310),coin(1840,250),coin(2095,310),coin(2245,250),coin(2515,310),coin(2655,250),coin(2795,305),coin(2940,420)],
+    hazards:[{x:485,y:423,w:44,h:22},{x:875,y:443,w:45,h:22},{x:1255,y:408,w:48,h:22},{x:1660,y:438,w:46,h:22},{x:2040,y:413,w:46,h:22},{x:2470,y:443,w:48,h:22},{x:2810,y:443,w:42,h:22}],
+    enemies:[enemy(475,422,465,700,105),enemy(1235,407,1225,1500,115),enemy(2020,412,2010,2290,125),enemy(2470,442,2450,2790,130)], checkpoints:[{x:1225,y:430},{x:2435,y:465}],
+    decorations:[{x:120,y:450,type:'crystal'},{x:790,y:445,type:'crystal'},{x:1580,y:445,type:'crystal'},{x:2360,y:445,type:'crystal'}],
+    pipes:[{x:40,floorY:470,roomId:'crystal-vault'}]
+  },
+  {
+    name:'Picos de Cristal', subtitle:'A última travessia antes do coração', theme:'summit', musicTrack:'summit', worldW:3240, spawn:{x:42,y:420}, goalX:3090,
+    platforms:[
+      plat(0,470,300,70,'ground'),plat(405,450,250,90,'ground'),plat(760,430,245,110,'ground'),plat(1115,460,250,80,'ground'),plat(1475,435,250,105,'ground'),plat(1840,460,245,80,'ground'),plat(2195,430,250,110,'ground'),plat(2555,455,200,85,'ground'),plat(2865,460,375,80,'ground'),
+      plat(185,385,92),plat(305,325,92),plat(465,365,92,18,'moving',{moveY:40,speed:1.5,phase:.6}),plat(610,305,92),plat(830,350,92),plat(955,290,92,18,'crumble'),plat(1185,370,92),plat(1310,310,92),plat(1545,350,92,18,'bounce'),plat(1675,290,92),plat(1905,365,92),plat(2030,305,92,18,'moving',{moveY:35,speed:1.7,phase:1.5}),plat(2265,350,92),plat(2395,290,92),plat(2620,365,92),plat(2740,305,92),plat(2940,355,92)
+    ],
+    coins:[coin(210,350),coin(330,290),coin(490,325),coin(635,265),coin(855,310),coin(980,250),coin(1210,330),coin(1335,270),coin(1570,310),coin(1700,250),coin(1930,325),coin(2055,265),coin(2290,310),coin(2420,250),coin(2645,325),coin(2765,265),coin(2970,310),coin(3115,420)],
+    hazards:[{x:435,y:428,w:42,h:22},{x:800,y:408,w:45,h:22},{x:1150,y:438,w:45,h:22},{x:1515,y:413,w:48,h:22},{x:1880,y:438,w:45,h:22},{x:2235,y:408,w:48,h:22},{x:2600,y:433,w:44,h:22},{x:2905,y:438,w:45,h:22}],
+    enemies:[enemy(425,427,415,630,115),enemy(790,407,780,970,120),enemy(1500,412,1490,1700,125),enemy(2220,407,2210,2410,135),enemy(2890,437,2880,3040,140)], checkpoints:[{x:1315,y:310},{x:2395,y:290}],
+    decorations:[{x:100,y:450,type:'crystal'},{x:720,y:410,type:'crystal'},{x:1080,y:440,type:'crystal'},{x:1800,y:440,type:'crystal'},{x:2510,y:445,type:'crystal'}],
+    pipes:[{x:40,floorY:470,roomId:'root-chamber'}]
+  },
+  {
+    name:'Coração do Pântano', subtitle:'Derrote o Guardião Corrompido', musicTrack:'heart', theme:'heart', worldW:1760, spawn:{x:45,y:431}, goalX:1650,
     platforms:[plat(0,460,1760,80,'ground'),plat(245,370,100),plat(430,320,92),plat(1230,365,100),plat(1410,315,100)],
     coins:[coin(275,335),coin(460,285),coin(655,420),coin(810,420),coin(1000,420),coin(1160,420),coin(1260,330),coin(1440,280),coin(1535,420)],
-    hazards:[{x:350,y:438,w:35,h:22},{x:1165,y:438,w:38,h:22}],
+    hazards:[{x:350,y:438,w:35,h:22}],
     enemies:[], movers:[], checkpoints:[{x:190,y:460}], decorations:[{x:130,y:450,type:'crystal'},{x:550,y:445,type:'crystal'},{x:1340,y:445,type:'crystal'}],
-    boss:{x:890,y:394,w:74,h:64,minX:700,maxX:1290,speed:68,dir:1,hp:3,maxHp:3,attackTimer:1.8,waves:[]}
+    boss:{x:890,y:394,w:74,h:64,minX:700,maxX:1290,speed:68,dir:1,hp:3,maxHp:3,attackTimer:1.8,waves:[],type:'heart',label:'GUARDIÃO CORROMPIDO'}
   }
 ];
+
+const sublevelTemplates = {
+  'mushroom-grotto': {
+    name:'Gruta dos Cogumelos', theme:'cave', musicTrack:'sub-grotto', worldW:1120, spawn:{x:130,y:431}, exitX:35, exitFloorY:460,
+    platforms:[plat(0,460,1120,80,'ground'),plat(190,390,105),plat(355,335,100),plat(520,385,100,18,'bounce'),plat(680,330,105),plat(850,380,105),plat(970,315,100)],
+    coins:[coin(220,355),coin(385,300),coin(550,345),coin(710,295),coin(880,345),coin(1000,280),coin(1065,420)],
+    hazards:[{x:300,y:438,w:34,h:22},{x:760,y:438,w:40,h:22}], enemies:[enemy(430,437,400,490,65)],
+    checkpoints:[{x:675,y:460}], decorations:[{x:130,y:445,type:'crystal'},{x:605,y:445,type:'crystal'}]
+  },
+  'crystal-vault': {
+    name:'Cofre Cristalino', theme:'ruins', musicTrack:'sub-vault', worldW:980, spawn:{x:130,y:431}, exitX:35, exitFloorY:460,
+    platforms:[plat(0,460,980,80,'ground'),plat(190,385,95),plat(330,325,95,18,'moving',{moveY:20,speed:1.4,phase:1}),plat(485,375,95,18,'crumble'),plat(635,315,95),plat(790,370,95,18,'bounce')],
+    coins:[coin(215,350),coin(355,285),coin(510,335),coin(660,275),coin(815,330),coin(900,420),coin(940,420)],
+    hazards:[{x:405,y:438,w:28,h:22},{x:710,y:438,w:32,h:22}], enemies:[], checkpoints:[{x:625,y:460}], decorations:[{x:105,y:445,type:'crystal'},{x:930,y:445,type:'crystal'}]
+  },
+  'root-chamber': {
+    name:'Câmara das Raízes', theme:'heart', musicTrack:'sub-roots', worldW:1040, spawn:{x:130,y:431}, exitX:35, exitFloorY:460,
+    platforms:[plat(0,460,1040,80,'ground'),plat(180,395,100),plat(320,335,95),plat(470,380,100),plat(625,320,95,18,'moving',{moveX:24,speed:1.2,phase:1}),plat(790,370,100),plat(900,310,95)],
+    coins:[coin(205,360),coin(345,295),coin(495,340),coin(650,280),coin(815,330),coin(925,270),coin(990,420)],
+    hazards:[{x:380,y:438,w:30,h:22},{x:715,y:438,w:35,h:22}], enemies:[enemy(820,437,790,865,70)],
+    checkpoints:[{x:610,y:460}], decorations:[{x:110,y:445,type:'flower'},{x:960,y:445,type:'crystal'}]
+  }
+};
+function cloneSublevel(roomId) {
+  const src=sublevelTemplates[roomId] || sublevelTemplates['mushroom-grotto'];
+  return {...src,isSublevel:true,roomId,sublevelExitX:src.exitX,exitFloorY:src.exitFloorY,pipes:[],goalX:src.worldW-40,
+    platforms:src.platforms.map(p=>({...p,baseX:p.x,baseY:p.y,prevX:p.x,prevY:p.y,hidden:false,triggered:false,crumbleTimer:0,respawnTimer:0})),
+    coins:src.coins.map((c,i)=>({...c,taken:false,id:i})),hazards:src.hazards.map(h=>({...h})),enemies:src.enemies.map(e=>({...e})),
+    checkpoints:src.checkpoints.map(c=>({...c,used:false})),decorations:src.decorations.map(d=>({...d})),boss:null};
+}
+let sublevelReturn = null, sublevelCache = {}, pipeTransition = null;
+const PIPE_SINK_TIME = .42, PIPE_REVEAL_TIME = .30;
+function centerPlayerOnPipe(pipe) {
+  const topY=pipe.floorY-42;
+  player.x=pipe.x+(46-player.w)/2;
+  player.y=topY-player.h;
+  player.vx=0;player.vy=0;player.onGround=true;player.groundPlatform=null;player.jumpsUsed=0;
+}
+function isStandingOnPipeTop(pipe) {
+  if(!player||!player.onGround)return false;
+  const topY=pipe.floorY-42, center=player.x+player.w/2;
+  return Math.abs((player.y+player.h)-topY)<5 && center>=pipe.x+5 && center<=pipe.x+41;
+}
+function enterSublevel(pipe) {
+  if (sublevelReturn || pipeTransition || !level || level.isSublevel || !isStandingOnPipeTop(pipe)) return;
+  const cacheKey=`${levelIndex}:${pipe.roomId}`;
+  sublevelReturn={level,player:{...player},cameraX,checkpointX,checkpointY,elapsed,pipe:{...pipe},cacheKey};
+  centerPlayerOnPipe(pipe);
+  pipeTransition={type:'enter',stage:'sink',t:0,duration:PIPE_SINK_TIME,pipe:{...pipe},startY:player.y,targetY:null};
+  playSfx('pipe');
+}
+function exitSublevel() {
+  if(!sublevelReturn||pipeTransition||!level||!level.isSublevel)return;
+  const pipe={x:level.sublevelExitX,floorY:level.exitFloorY};
+  if(!isStandingOnPipeTop(pipe))return;
+  centerPlayerOnPipe(pipe);
+  pipeTransition={type:'exit',stage:'sink',t:0,duration:PIPE_SINK_TIME,pipe:{...pipe},startY:player.y,targetY:null};
+  playSfx('pipe');
+}
+function finishPipeSink() {
+  const tr=pipeTransition;
+  if(!tr)return;
+  if(tr.type==='enter') {
+    const ret=sublevelReturn;
+    if(!ret){pipeTransition=null;return;}
+    level=sublevelCache[ret.cacheKey]||cloneSublevel(ret.pipe.roomId);
+    cameraX=0;elapsed=0;particles=[];floatTexts=[];invincible=0;jumpBuffer=0;coyote=0;
+    player={x:level.spawn.x,y:level.spawn.y,w:28,h:29,vx:0,vy:0,onGround:false,groundPlatform:null,face:1,anim:0,jumpsUsed:0};
+    // A entrada da subfase deve acontecer pelo topo do cano de retorno,
+    // não pelo ponto de spawn no meio da sala. Assim a animação termina
+    // alinhada visualmente com o cano e o jogador já fica apoiado nele.
+    const entryPipe={x:level.sublevelExitX,floorY:level.exitFloorY};
+    centerPlayerOnPipe(entryPipe);
+    tr.pipe={...entryPipe};
+    checkpointX=player.x;checkpointY=player.y;
+  } else {
+    const ret=sublevelReturn;
+    if(!ret){pipeTransition=null;return;}
+    if(level&&level.isSublevel)sublevelCache[ret.cacheKey]=level;
+    level=ret.level;player=ret.player;cameraX=ret.cameraX;checkpointX=ret.checkpointX;checkpointY=ret.checkpointY;elapsed=ret.elapsed;
+    centerPlayerOnPipe(ret.pipe);
+    tr.pipe={...ret.pipe};
+    sublevelReturn=null;
+  }
+  tr.stage='reveal';tr.t=0;tr.duration=PIPE_REVEAL_TIME;tr.targetY=player.y;player.y+=18;player.vx=0;player.vy=0;player.onGround=true;player.groundPlatform=null;
+}
+function updatePipeTransition(dt) {
+  const tr=pipeTransition;if(!tr)return false;
+  tr.t+=dt;
+  const progress=clamp(tr.t/tr.duration,0,1);
+  if(tr.stage==='sink') {
+    player.x=tr.pipe.x+(46-player.w)/2;
+    player.y=tr.startY+progress*(player.h+8);
+    player.vx=0;player.vy=0;player.onGround=false;player.groundPlatform=null;
+    if(progress>=1)finishPipeSink();
+  } else {
+    player.y=tr.targetY+(1-progress)*18;
+    player.vx=0;player.vy=0;player.onGround=true;player.groundPlatform=null;
+    if(progress>=1) {
+      player.y=tr.targetY;player.onGround=true;player.vy=0;
+      // Brief protection prevents a patrol enemy from hitting the frog on the first frame after emerging.
+      invincible=tr.type==='exit'?1.1:.35;
+      pipeTransition=null;
+    }
+  }
+  return true;
+}
 
 const keys = new Set(), justPressed = new Set();
 let state = 'menu', levelIndex = 0, level = null, player = null, settingsReturnState = 'menu';
@@ -199,13 +363,21 @@ const DEFAULT_SETTINGS = { musicEnabled:true, sfxEnabled:true, musicVolume:0.22,
 const DEFAULT_PROGRESS = { unlockedLevel:0, completedLevels:[], perfectLevels:[], bestScore:0, totalCoins:0, doubleJumpUnlocked:false, bossDefeated:false };
 function readStored(key, fallback) { try { const value=localStorage.getItem(key); return value ? {...fallback, ...JSON.parse(value)} : {...fallback}; } catch (_) { return {...fallback}; } }
 let settings = readStored('mushyfrog-settings-v2', DEFAULT_SETTINGS);
-let progress = readStored('mushyfrog-progress-v2', DEFAULT_PROGRESS);
-progress.unlockedLevel = clamp(Number(progress.unlockedLevel)||0,0,5);
+let progress = (() => {
+  try {
+    const current=localStorage.getItem('mushyfrog-progress-v3');
+    if(current) return {...DEFAULT_PROGRESS,...JSON.parse(current)};
+    const previous=JSON.parse(localStorage.getItem('mushyfrog-progress-v2')||'null');
+    // Preserve lifetime stats, but reset the unlocked route because phase indexes changed and bosses now gate progress.
+    return previous ? {...DEFAULT_PROGRESS,bestScore:Number(previous.bestScore)||0,totalCoins:Number(previous.totalCoins)||0} : {...DEFAULT_PROGRESS};
+  } catch (_) { return {...DEFAULT_PROGRESS}; }
+})();
+progress.unlockedLevel = clamp(Number(progress.unlockedLevel)||0,0,9);
 if (!Array.isArray(progress.completedLevels)) progress.completedLevels=[];
 if (!Array.isArray(progress.perfectLevels)) progress.perfectLevels=[];
 let audioCtx = null, musicGain = null, sfxGain = null, musicTimer = null, musicStep = 0;
 function saveSettings() { try { localStorage.setItem('mushyfrog-settings-v2', JSON.stringify(settings)); } catch (_) {} }
-function saveProgress() { try { localStorage.setItem('mushyfrog-progress-v2', JSON.stringify(progress)); } catch (_) {} }
+function saveProgress() { try { localStorage.setItem('mushyfrog-progress-v3', JSON.stringify(progress)); } catch (_) {} }
 function applySettings() {
   document.documentElement.style.setProperty('--touch-scale', String(clamp(Number(settings.controlScale)||1.2,0.85,1.5)));
   if (musicGain) musicGain.gain.setTargetAtTime(settings.musicEnabled ? settings.musicVolume : 0, audioCtx.currentTime, 0.04);
@@ -229,15 +401,30 @@ function tone(freq, duration, wave='square', volume=0.12, channel='sfx', delay=0
     osc.connect(amp); amp.connect(channel==='music'?musicGain:sfxGain); osc.start(now); osc.stop(now+duration+0.025);
   } catch (_) {}
 }
+let currentMusicTrack = 'grove';
 function musicTick() {
   if (!audioCtx || !settings.musicEnabled || settings.musicVolume<=0.001) { musicStep++; return; }
-  const theme=state==='menu'||state==='settings'||state==='instructions'||state==='levelselect'?'meadow':(level?level.theme:'meadow');
-  const seqs={meadow:[0,4,7,11,7,4,2,4,0,4,7,12,11,7,4,2],cave:[0,3,7,10,7,3,1,3,0,3,7,12,10,7,3,1],sky:[0,4,9,12,9,4,2,4,0,4,9,14,12,9,4,2],swamp:[0,3,5,8,5,3,1,3,0,3,7,10,8,5,3,1],ruins:[0,4,7,9,7,4,2,4,0,4,7,11,9,7,4,2],heart:[0,3,6,10,6,3,1,3,0,3,6,11,10,6,3,1]};
-  const notes=seqs[theme]||seqs.meadow; const root=theme==='cave'?196:theme==='heart'?174:theme==='swamp'?207:theme==='ruins'?220:theme==='sky'?247:220;
-  const semitone=n=>root*Math.pow(2,n/12); const idx=musicStep%notes.length;
-  if (musicStep%2===0) tone(semitone(notes[idx]),0.18,'square',0.09,'music');
-  if (musicStep%4===0) tone(root/2,0.28,'triangle',0.10,'music',0.01);
-  if (musicStep%8===6) tone(semitone(notes[(idx+2)%notes.length])*2,0.09,'square',0.035,'music',0.04);
+  const track=(state==='menu'||state==='settings'||state==='instructions'||state==='levelselect'||state==='leaderboard')?'grove':(level?(level.musicTrack||level.theme):'grove');
+  if(track!==currentMusicTrack){currentMusicTrack=track;musicStep=0;}
+  const tracks={
+    grove:{root:220,notes:[0,4,7,11,7,4,2,4,0,4,7,12,11,7,4,2],leadEvery:2,bassEvery:4,highEvery:8,wave:'square'},
+    crystal:{root:196,notes:[0,3,7,10,7,3,1,3,0,3,8,12,10,7,3,1],leadEvery:2,bassEvery:4,highEvery:6,wave:'triangle'},
+    sky:{root:247,notes:[0,4,9,12,9,4,2,4,0,4,9,14,12,9,4,2],leadEvery:1,bassEvery:4,highEvery:8,wave:'square'},
+    swamp:{root:185,notes:[0,3,5,8,5,3,1,3,0,3,7,10,8,5,3,1],leadEvery:3,bassEvery:4,highEvery:8,wave:'triangle'},
+    ruins:{root:220,notes:[0,4,7,9,7,4,2,4,0,4,7,11,9,7,4,2],leadEvery:2,bassEvery:3,highEvery:8,wave:'square'},
+    forge:{root:146,notes:[0,3,5,8,7,5,3,1,0,5,8,10,8,7,3,1],leadEvery:1,bassEvery:2,highEvery:6,wave:'sawtooth'},
+    moon:{root:262,notes:[0,2,7,9,7,2,5,2,0,4,7,11,9,7,4,2],leadEvery:3,bassEvery:4,highEvery:6,wave:'triangle'},
+    drowned:{root:185,notes:[0,5,7,10,7,5,3,5,0,5,8,12,10,7,5,3],leadEvery:2,bassEvery:3,highEvery:8,wave:'sine'},
+    summit:{root:233,notes:[0,4,7,12,9,7,4,2,0,4,9,14,12,9,7,4],leadEvery:1,bassEvery:4,highEvery:6,wave:'triangle'},
+    heart:{root:174,notes:[0,3,6,10,6,3,1,3,0,3,6,11,10,6,3,1],leadEvery:2,bassEvery:3,highEvery:6,wave:'sawtooth'},
+    'sub-grotto':{root:165,notes:[0,3,7,12,10,7,3,0,0,5,8,12,10,8,5,3],leadEvery:3,bassEvery:4,highEvery:8,wave:'triangle'},
+    'sub-vault':{root:207,notes:[0,7,10,14,12,10,7,3,0,5,9,12,10,9,5,2],leadEvery:1,bassEvery:4,highEvery:6,wave:'square'},
+    'sub-roots':{root:155,notes:[0,3,6,8,6,3,2,3,0,6,8,11,8,6,3,2],leadEvery:2,bassEvery:2,highEvery:8,wave:'sine'}
+  };
+  const m=tracks[track]||tracks.grove, idx=musicStep%m.notes.length, semi=n=>m.root*Math.pow(2,n/12);
+  if(musicStep%m.leadEvery===0)tone(semi(m.notes[idx]),0.17,m.wave,0.075,'music');
+  if(musicStep%m.bassEvery===0)tone(m.root/2,0.24,'triangle',0.085,'music',0.01);
+  if(musicStep%m.highEvery===Math.max(0,m.highEvery-2))tone(semi(m.notes[(idx+3)%m.notes.length])*2,0.075,'square',0.03,'music',0.04);
   musicStep++;
 }
 function playSfx(name) {
@@ -245,7 +432,7 @@ function playSfx(name) {
   const patterns={
     coin:[[880,.07,'square',.13,0],[1320,.10,'square',.10,.055]], jump:[[330,.08,'square',.10,0],[495,.12,'square',.08,.045]], doublejump:[[490,.07,'square',.10,0],[660,.08,'square',.09,.055],[880,.10,'triangle',.07,.10]],
     bounce:[[220,.10,'triangle',.13,0],[440,.11,'square',.09,.07]], hurt:[[220,.17,'sawtooth',.12,0],[150,.20,'sawtooth',.09,.09]], checkpoint:[[523,.09,'square',.10,0],[659,.09,'square',.10,.08],[784,.17,'square',.10,.16]],
-    finish:[[523,.12,'square',.11,0],[659,.12,'square',.11,.12],[784,.12,'square',.11,.24],[1047,.25,'triangle',.11,.36]], stomp:[[440,.07,'square',.11,0],[587,.10,'square',.09,.04]], bossHit:[[220,.09,'sawtooth',.11,0],[165,.17,'sawtooth',.08,.06]], bossDefeat:[[392,.13,'square',.10,0],[494,.13,'square',.10,.12],[587,.13,'square',.11,.24],[784,.24,'triangle',.12,.36]], gameover:[[392,.14,'triangle',.10,0],[330,.14,'triangle',.09,.15],[262,.28,'triangle',.09,.30]], click:[[660,.04,'square',.045,0]], crumble:[[280,.06,'triangle',.08,0],[180,.08,'triangle',.07,.04]]
+    finish:[[523,.12,'square',.11,0],[659,.12,'square',.11,.12],[784,.12,'square',.11,.24],[1047,.25,'triangle',.11,.36]], stomp:[[440,.07,'square',.11,0],[587,.10,'square',.09,.04]], bossHit:[[220,.09,'sawtooth',.11,0],[165,.17,'sawtooth',.08,.06]], bossDefeat:[[392,.13,'square',.10,0],[494,.13,'square',.10,.12],[587,.13,'square',.11,.24],[784,.24,'triangle',.12,.36]], gameover:[[392,.14,'triangle',.10,0],[330,.14,'triangle',.09,.15],[262,.28,'triangle',.09,.30]], click:[[660,.04,'square',.045,0]], pipe:[[196,.08,'triangle',.08,0],[330,.09,'square',.06,.07],[494,.12,'triangle',.055,.14]], crumble:[[280,.06,'triangle',.08,0],[180,.08,'triangle',.07,.04]]
   };
   for(const [f,d,w,v,delay] of (patterns[name]||[])) tone(f,d,w,v,'sfx',delay);
 }
@@ -261,12 +448,13 @@ function cloneLevel(i) {
     enemies:src.enemies.map(e=>({...e})),
     checkpoints:src.checkpoints.map(c=>({...c,used:false})),
     decorations:src.decorations.map(d=>({...d})),
-    boss:src.boss ? {...src.boss, waves:[], attackTimer:1.8} : null
+    pipes:(src.pipes||[]).map(p=>({...p})), isSublevel:false,
+    boss:src.boss ? {...src.boss, waves:[], attackTimer:src.boss.attackTimer||1.8} : null
   };
 }
-function beginCampaign() { score=0; lives=3; deaths=0; runCoins=0; scoreSubmissionHandled=false; loadLevel(0); state='playing'; }
+function beginCampaign() { sublevelCache={}; score=0; lives=3; deaths=0; runCoins=0; scoreSubmissionHandled=false; loadLevel(0); state='playing'; }
 function loadLevel(i) {
-  levelIndex=i; level=cloneLevel(i); cameraX=0; elapsed=0; particles=[]; floatTexts=[]; invincible=0; jumpBuffer=0; coyote=0; completionRecorded=false;
+  sublevelReturn=null; pipeTransition=null; levelIndex=i; level=cloneLevel(i); cameraX=0; elapsed=0; particles=[]; floatTexts=[]; invincible=0; jumpBuffer=0; coyote=0; completionRecorded=false;
   checkpointX=level.spawn.x; checkpointY=level.spawn.y;
   player={x:level.spawn.x,y:level.spawn.y,w:28,h:29,vx:0,vy:0,onGround:false,groundPlatform:null,face:1,anim:0,jumpsUsed:0};
 }
@@ -306,10 +494,25 @@ function updateMovingPlatforms(dt) {
     if(player.groundPlatform===p) { player.x+=p.x-p.prevX; player.y+=p.y-p.prevY; }
   }
 }
+// Pipes are solid objects: the rim is a walkable surface and the body blocks
+// movement from the sides. The same collision geometry is used for sublevel exits.
+function getCollisionSurfaces() {
+  const surfaces=[...level.platforms];
+  const pipes=level.isSublevel
+    ? [{x:level.sublevelExitX,floorY:level.exitFloorY}]
+    : (level.pipes||[]);
+  for(const pipe of pipes) {
+    const topY=pipe.floorY-42;
+    surfaces.push({x:pipe.x,y:topY,w:46,h:42,kind:'pipe',prevX:pipe.x,prevY:topY,hidden:false,isPipe:true});
+  }
+  return surfaces;
+}
 function update(dt) {
   if(state!=='playing') return;
+  if(pipeTransition){updatePipeTransition(dt);return;}
   elapsed+=dt;
   updateMovingPlatforms(dt);
+  const collisionSurfaces=getCollisionSurfaces();
   invincible=Math.max(0,invincible-dt);
   jumpBuffer=Math.max(0,jumpBuffer-dt);
   if(justPressed.has('Space')||justPressed.has('ArrowUp')||justPressed.has('KeyW')) jumpBuffer=.14;
@@ -323,24 +526,33 @@ function update(dt) {
   else if(jumpBuffer>0 && progress.doubleJumpUnlocked && player.jumpsUsed<2){player.vy=-590;player.onGround=false;player.groundPlatform=null;coyote=0;jumpBuffer=0;player.jumpsUsed=2;playSfx('doublejump');particles.push(...burst(player.x+player.w/2,player.y+player.h/2,'#9df7d0',9));}
   player.anim+=dt*(Math.abs(player.vx)>20?10:3);
 
-  // Horizontal resolution.
+  // Horizontal resolution: resolve only a genuine side crossing. Previously any
+  // overlap (including landing on a platform edge) snapped the frog to a side,
+  // which looked like a teleport near platform corners.
   const oldX=player.x; player.x+=player.vx*dt;
-  for(const p of level.platforms){ if(p.hidden || !rects(player,p)) continue;
-    if(player.vx>0) player.x=p.x-player.w; else if(player.vx<0) player.x=p.x+p.w;
-    player.vx=0;
+  for(const p of collisionSurfaces){
+    if(p.hidden) continue;
+    // The frog must be beside the platform, not above its walkable top.
+    const besideVertically = player.y >= p.y + 2 && player.y < p.y + p.h - 1;
+    if(!besideVertically) continue;
+    if(player.vx>0 && oldX+player.w<=p.x+1 && player.x+player.w>p.x){
+      player.x=p.x-player.w; player.vx=0;
+    } else if(player.vx<0 && oldX>=p.x+p.w-1 && player.x<p.x+p.w){
+      player.x=p.x+p.w; player.vx=0;
+    }
   }
   player.x=clamp(player.x,0,level.worldW-player.w);
 
-  // Vertical resolution and platform landings.
+  // Vertical resolution uses the previous platform position to avoid edge snapping.
   const oldY=player.y; player.vy+=1650*dt; player.vy=Math.min(player.vy,900); player.y+=player.vy*dt;
   player.onGround=false; player.groundPlatform=null;
-  for(const p of level.platforms){
-    if(player.x+player.w<=p.x+2||player.x>=p.x+p.w-2) continue;
-    if(player.vy>=0 && oldY+player.h<=p.prevY+12 && player.y+player.h>=p.y){
+  for(const p of collisionSurfaces){
+    if(p.hidden || player.x+player.w<=p.x || player.x>=p.x+p.w) continue;
+    if(player.vy>=0 && oldY+player.h<=p.prevY+8 && player.y+player.h>=p.y){
       player.y=p.y-player.h; player.onGround=true; player.groundPlatform=p; player.jumpsUsed=0;
       if(p.kind==='bounce'){ player.vy=-790; player.onGround=false; player.groundPlatform=null; particles.push(...burst(player.x+player.w/2,p.y,'#b6f8ff',10)); playSfx('bounce'); }
       else { player.vy=0; if(p.kind==='crumble'&&!p.triggered){p.triggered=true;p.crumbleTimer=.62;playSfx('crumble');} }
-    } else if(player.vy<0 && oldY>=p.prevY+p.h-2 && player.y<=p.y+p.h){
+    } else if(player.vy<0 && oldY>=p.prevY+p.h-2 && player.y<=p.y+p.h && player.x+player.w>p.x+2 && player.x<p.x+p.w-2){
       player.y=p.y+p.h; player.vy=35;
     }
   }
@@ -366,11 +578,16 @@ function update(dt) {
       particles.push(...burst(cp.x,support.y-20,'#8fffb5',18)); playSfx('checkpoint');
     }
   }
-  // Guardião final: saltar sobre a cabeça causa dano; ondas rasteiras podem ser evitadas pulando.
+  // Chefes patrulham a arena; pular sobre a cabeça causa dano e projéteis podem ser evitados pulando.
   if(level.boss && level.boss.hp>0) {
     const b=level.boss; b.x+=b.speed*b.dir*dt; if(b.x<b.minX){b.x=b.minX;b.dir=1;} if(b.x+b.w>b.maxX){b.x=b.maxX-b.w;b.dir=-1;}
     b.attackTimer-=dt;
-    if(b.attackTimer<=0){b.attackTimer=2.1;const toward=(player.x+player.w/2)<(b.x+b.w/2)?-1:1;b.waves.push({x:b.x+b.w/2,y:440,w:24,h:12,vx:toward*235});}
+    if(b.attackTimer<=0){
+      b.attackTimer=b.type==='magma'?1.45:(b.type==='storm'?1.75:2.0);
+      const toward=(player.x+player.w/2)<(b.x+b.w/2)?-1:1;
+      b.waves.push({x:b.x+b.w/2,y:440,w:b.type==='magma'?30:24,h:b.type==='storm'?16:12,vx:toward*(b.type==='magma'?285:(b.type==='storm'?255:225)),type:b.type});
+      if(b.type==='storm') b.waves.push({x:b.x+b.w/2,y:410,w:22,h:10,vx:toward*205,type:b.type});
+    }
     for(const wave of b.waves){wave.x+=wave.vx*dt; if(rects(player,wave)&&invincible<=0){respawn();return;}}
     b.waves=b.waves.filter(w=>w.x>-40&&w.x<level.worldW+40);
     if(rects(player,{x:b.x+5,y:b.y+6,w:b.w-10,h:b.h-6}) && invincible<=0) {
@@ -380,8 +597,17 @@ function update(dt) {
       } else { respawn(); return; }
     }
   }
-  // Goal. The final flag stays locked until the guardian is defeated.
-  if(player.x+player.w>=level.goalX && (!level.boss || level.boss.hp<=0)){recordLevelComplete();state='levelcomplete';player.vx=0;player.vy=0;particles.push(...burst(level.goalX,270,'#fff09a',32));playSfx('finish');}
+  // Down at a pipe opens an optional bonus sub-area; down at the return pipe exits it.
+  const downPressed=justPressed.has('ArrowDown')||justPressed.has('KeyS')||justPressed.has('ArrowDown')&&touchHeld.has('ArrowDown');
+  if(level.isSublevel){
+    const exitPipe={x:level.sublevelExitX,floorY:level.exitFloorY};
+    if(downPressed && isStandingOnPipeTop(exitPipe)){exitSublevel();return;}
+  } else if(downPressed && player.onGround){
+    const pipe=(level.pipes||[]).find(pipe=>isStandingOnPipeTop(pipe));
+    if(pipe){enterSublevel(pipe);return;}
+  }
+  // Goal. Each boss blocks the finish until it has been defeated.
+  if(!level.isSublevel && player.x+player.w>=level.goalX && (!level.boss || level.boss.hp<=0)){recordLevelComplete();state='levelcomplete';player.vx=0;player.vy=0;particles.push(...burst(level.goalX,270,'#fff09a',32));playSfx('finish');}
   // Particles and camera.
   for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=230*dt;p.life-=dt;} particles=particles.filter(p=>p.life>0);
   for(const t of floatTexts){t.y-=30*dt;t.life-=dt;}floatTexts=floatTexts.filter(t=>t.life>0);
@@ -457,44 +683,57 @@ function drawEnemy(e,t) {
 }
 function drawFrog(t) {
   const x=Math.round(player.x-cameraX), y=Math.round(player.y);
-  if(invincible>0&&Math.floor(invincible*12)%2===0)return;
+  if(!pipeTransition&&invincible>0&&Math.floor(invincible*12)%2===0)return;
+  let transitionAlpha=1, transitionScaleY=1;
+  if(pipeTransition) {
+    const progress=clamp(pipeTransition.t/pipeTransition.duration,0,1);
+    if(pipeTransition.stage==='sink') transitionScaleY=1-progress*.24;
+    else { transitionAlpha=clamp(progress*1.6,0,1); transitionScaleY=.78+.22*progress; }
+  }
   const running=player.onGround&&Math.abs(player.vx)>30;
   const frame=!player.onGround?3:(running?(Math.floor(t*12)%2===0?1:2):0);
   const bob=player.onGround&&!running?Math.sin(player.anim)*Math.min(1.5,Math.abs(player.vx)/90):0;
+  const drawH=player.h*transitionScaleY;
   // Soft shadow remains separate, so the PNG itself has a truly transparent background.
-  ctx.globalAlpha=.22;ctx.fillStyle='#18243e';ctx.fillRect(x+2,y+player.h-1,player.w-4,5);ctx.globalAlpha=1;
+  ctx.globalAlpha=.22*transitionAlpha;ctx.fillStyle='#18243e';ctx.fillRect(x+2,y+player.h-1,player.w-4,5);
   if(frogSheet.complete&&frogSheet.naturalWidth>=128){
-    const drawY=Math.round(y+bob);
-    ctx.save();
+    const drawY=Math.round(y+bob+(player.h-drawH));
+    ctx.globalAlpha=transitionAlpha;ctx.save();
     if(player.face<0){
       ctx.translate(x+player.w,0);ctx.scale(-1,1);
-      ctx.drawImage(frogSheet,frame*32,0,32,32,0,drawY,player.w,player.h);
+      ctx.drawImage(frogSheet,frame*32,0,32,32,0,drawY,player.w,drawH);
     } else {
-      ctx.drawImage(frogSheet,frame*32,0,32,32,x,drawY,player.w,player.h);
+      ctx.drawImage(frogSheet,frame*32,0,32,32,x,drawY,player.w,drawH);
     }
     ctx.restore();
   } else {
-    // Procedural fallback in case the asset file is moved or unavailable.
-    ctx.fillStyle='#185d45';ctx.fillRect(x+2,y+17+bob,8,10);ctx.fillRect(x+18,y+17+bob,8,10);
-    ctx.fillStyle='#4acb72';ctx.fillRect(x+2,y+8+bob,24,16);ctx.fillRect(x+5,y+4+bob,18,19);ctx.fillRect(x+1,y+11+bob,26,10);
-    ctx.fillStyle='#7df28a';ctx.fillRect(x+6,y+6+bob,16,13);ctx.fillRect(x+8,y+5+bob,5,7);
-    ctx.fillStyle='#1d754f';ctx.fillRect(x+2,y+3+bob,9,10);ctx.fillRect(x+17,y+3+bob,9,10);
-    ctx.fillStyle='#f8fff0';ctx.fillRect(x+4,y+1+bob,7,8);ctx.fillRect(x+18,y+1+bob,7,8);
-    ctx.fillStyle='#152941';const pupilOffset=player.face>0?2:0;ctx.fillRect(x+7+pupilOffset,y+3+bob,3,5);ctx.fillRect(x+19+pupilOffset,y+3+bob,3,5);
-    ctx.fillStyle='#24744c';ctx.fillRect(x+8,y+17+bob,13,3);
-    ctx.fillStyle='#e7ffae';ctx.fillRect(x+8,y+19+bob,3,2);ctx.fillRect(x+18,y+19+bob,3,2);
+    ctx.globalAlpha=transitionAlpha;
+    // Procedural fallback is compressed around the feet during a pipe transition.
+    ctx.save();ctx.translate(0,y+player.h);ctx.scale(1,transitionScaleY);const fy=-player.h;
+    ctx.fillStyle='#185d45';ctx.fillRect(x+2,fy+17+bob,8,10);ctx.fillRect(x+18,fy+17+bob,8,10);
+    ctx.fillStyle='#4acb72';ctx.fillRect(x+2,fy+8+bob,24,16);ctx.fillRect(x+5,fy+4+bob,18,19);ctx.fillRect(x+1,fy+11+bob,26,10);
+    ctx.fillStyle='#7df28a';ctx.fillRect(x+6,fy+6+bob,16,13);ctx.fillRect(x+8,fy+5+bob,5,7);
+    ctx.fillStyle='#1d754f';ctx.fillRect(x+2,fy+3+bob,9,10);ctx.fillRect(x+17,fy+3+bob,9,10);
+    ctx.fillStyle='#f8fff0';ctx.fillRect(x+4,fy+1+bob,7,8);ctx.fillRect(x+18,fy+1+bob,7,8);
+    ctx.fillStyle='#152941';const pupilOffset=player.face>0?2:0;ctx.fillRect(x+7+pupilOffset,fy+3+bob,3,5);ctx.fillRect(x+19+pupilOffset,fy+3+bob,3,5);
+    ctx.fillStyle='#24744c';ctx.fillRect(x+8,fy+17,13,3);
+    ctx.fillStyle='#e7ffae';ctx.fillRect(x+8,fy+19,3,2);ctx.fillRect(x+18,fy+19,3,2);
+    ctx.restore();
   }
+  ctx.globalAlpha=1;
 }
+
 function drawBoss() {
   if(!level.boss || level.boss.hp<=0) return;
   const b=level.boss,x=Math.round(b.x-cameraX),y=Math.round(b.y);if(x<-120||x>W+120)return;
-  // Guardião pixelado: corpo grande, olhos brilhantes e espinhos de energia.
-  ctx.fillStyle='#1c1632';ctx.fillRect(x+5,y+22,b.w-10,b.h-15);ctx.fillStyle='#713d78';ctx.fillRect(x+2,y+13,b.w-4,b.h-24);ctx.fillStyle='#a94f89';ctx.fillRect(x+10,y+7,b.w-20,20);ctx.fillStyle='#f17baf';ctx.fillRect(x+15,y+10,8,5);ctx.fillRect(x+b.w-23,y+10,8,5);
-  poly([[x+9,y+13],[x+18,y-3],[x+27,y+13]],'#d678a2','#301c42',2);poly([[x+b.w-27,y+13],[x+b.w-18,y-3],[x+b.w-9,y+13]],'#d678a2','#301c42',2);
-  ctx.fillStyle='#fff8d9';ctx.fillRect(x+18,y+17,11,12);ctx.fillRect(x+b.w-29,y+17,11,12);ctx.fillStyle='#2b203b';ctx.fillRect(x+23+(b.dir>0?2:0),y+20,5,7);ctx.fillRect(x+b.w-26+(b.dir>0?2:0),y+20,5,7);ctx.fillStyle='#f8b6d0';ctx.fillRect(x+27,y+38,20,4);
-  // Barra de vida do chefe.
-  roundedRect(340,88,280,16,6,'#211932','#ffe1f1',1);roundedRect(344,92,272*(b.hp/b.maxHp),8,3,'#f16c9e',null);text('GUARDIÃO CORROMPIDO',W/2,78,10,'#ffe8f3','center','900');
-  for(const wv of b.waves){const wx=wv.x-cameraX;ctx.fillStyle='#ff6b9e';ctx.fillRect(wx,wv.y,wv.w,wv.h);ctx.fillStyle='#ffd3e4';ctx.fillRect(wx+4,wv.y+2,wv.w-8,3);}
+  // Cada chefe tem uma paleta e padrão visual próprio.
+  const palettes={storm:{dark:'#26365e',body:'#477fbd',light:'#8eeaff',spike:'#e8fbff',bar:'#76d5ff',wave:'#90eaff'},magma:{dark:'#391b32',body:'#a64239',light:'#ff783f',spike:'#ffc05d',bar:'#ff7747',wave:'#ff8a3e'},ancient:{dark:'#24213d',body:'#75629c',light:'#b3a5e8',spike:'#e5dcff',bar:'#b69af8',wave:'#c0a6ff'},heart:{dark:'#1c1632',body:'#713d78',light:'#f17baf',spike:'#d678a2',bar:'#f16c9e',wave:'#ff6b9e'}};
+  const pal=palettes[b.type]||palettes.heart;
+  ctx.fillStyle=pal.dark;ctx.fillRect(x+5,y+22,b.w-10,b.h-15);ctx.fillStyle=pal.body;ctx.fillRect(x+2,y+13,b.w-4,b.h-24);ctx.fillStyle=pal.light;ctx.fillRect(x+10,y+7,b.w-20,20);ctx.fillStyle=pal.spike;ctx.fillRect(x+15,y+10,8,5);ctx.fillRect(x+b.w-23,y+10,8,5);
+  poly([[x+9,y+13],[x+18,y-3],[x+27,y+13]],pal.spike,pal.dark,2);poly([[x+b.w-27,y+13],[x+b.w-18,y-3],[x+b.w-9,y+13]],pal.spike,pal.dark,2);
+  ctx.fillStyle='#fff8d9';ctx.fillRect(x+18,y+17,11,12);ctx.fillRect(x+b.w-29,y+17,11,12);ctx.fillStyle=pal.dark;ctx.fillRect(x+23+(b.dir>0?2:0),y+20,5,7);ctx.fillRect(x+b.w-26+(b.dir>0?2:0),y+20,5,7);ctx.fillStyle=pal.spike;ctx.fillRect(x+27,y+38,20,4);
+  roundedRect(340,88,280,16,6,'#211932','#ffe1f1',1);roundedRect(344,92,272*(b.hp/b.maxHp),8,3,pal.bar,null);text(b.label||'CHEFE',W/2,78,10,'#ffe8f3','center','900');
+  for(const wv of b.waves){const wx=wv.x-cameraX;const wp=palettes[wv.type]||palettes.heart;ctx.fillStyle=wp.wave;ctx.fillRect(wx,wv.y,wv.w,wv.h);ctx.fillStyle='#fff8d9';ctx.fillRect(wx+4,wv.y+2,Math.max(2,wv.w-8),3);}
 }
 
 function drawFlag() {
@@ -517,18 +756,40 @@ function drawDecoration(d,t) {
     poly([[x,y-22],[x+8,y-10],[x+4,y],[x-3,y],[x-7,y-10]],'#70cce9','#263d65',2);ctx.fillStyle='#e5fbff';ctx.fillRect(x-1,y-17,3,12);
   }
 }
+function drawPipe(pipe) {
+  const x=Math.round(pipe.x-cameraX), top=Math.round(pipe.floorY-42);
+  if(x<-60||x>W+60)return;
+  ctx.fillStyle='#173d45';ctx.fillRect(x+5,top+8,36,pipe.floorY-top-8);
+  ctx.fillStyle='#176c59';ctx.fillRect(x+8,top+8,30,pipe.floorY-top-8);
+  ctx.fillStyle='#2da66f';ctx.fillRect(x+11,top+10,7,pipe.floorY-top-12);
+  ctx.fillStyle='#123c45';ctx.fillRect(x,top,46,13);ctx.fillStyle='#37c586';ctx.fillRect(x+3,top+2,40,7);ctx.fillStyle='#8df4a9';ctx.fillRect(x+6,top+3,10,3);
+  ctx.fillStyle='#143e43';ctx.fillRect(x+17,top+13,12,7);
+}
+function nearPipe() {
+  if(!level||!player||!player.onGround||pipeTransition)return false;
+  if(level.isSublevel){
+    const pipe={x:level.sublevelExitX,floorY:level.exitFloorY};
+    return isStandingOnPipeTop(pipe);
+  }
+  return (level.pipes||[]).some(pipe=>isStandingOnPipeTop(pipe));
+}
+
 function drawWorld(t) {
   drawSky(t);
   // Subtle pixel particles drifting in the atmosphere.
   for(let i=0;i<28;i++){const x=((i*71-cameraX*.36+t*(8+i%3))%W+W)%W,y=120+(i*53%300);ctx.globalAlpha=.15+.12*Math.sin(t*2+i);ctx.fillStyle='#ffffff';ctx.fillRect(x,y,2,2);}ctx.globalAlpha=1;
   for(const d of level.decorations)drawDecoration(d,t);
   for(const p of level.platforms)drawPlatform(p);
+  if(level.isSublevel) drawPipe({x:level.sublevelExitX,floorY:level.exitFloorY});
+  else for(const pipe of (level.pipes||[])) drawPipe(pipe);
   for(const h of level.hazards)drawHazard(h);
   for(const cp of level.checkpoints)drawCheckpoint(cp);
   for(const c of level.coins)drawCoin(c,t);
   for(const e of level.enemies)drawEnemy(e,t);
   if(level.boss && level.boss.hp>0) drawBoss();
-  drawFlag();drawFrog(t);
+  if(!level.isSublevel)drawFlag();drawFrog(t);
+  if(pipeTransition&&pipeTransition.stage==='sink')drawPipe(pipeTransition.pipe);
+  if(state==='playing'&&nearPipe())text(level.isSublevel?'↓ PRESSIONE PARA SAIR':'↓ PRESSIONE PARA ENTRAR NA SUBFASE',W/2,112,11,'#fff2a5','center','900');
   for(const p of particles){ctx.globalAlpha=clamp(p.life/p.max,0,1);ctx.fillStyle=p.color;ctx.fillRect(Math.round(p.x-cameraX),Math.round(p.y),p.size,p.size);}ctx.globalAlpha=1;
   for(const a of floatTexts){ctx.globalAlpha=clamp(a.life,0,1);text(a.text,a.x-cameraX,a.y,13,a.color,'center','900');}ctx.globalAlpha=1;
 }
@@ -536,13 +797,13 @@ function drawHud() {
   roundedRect(18,16,924,54,13,'#14253bd9','#ffffff26',1);
   // Score badge
   roundedRect(30,25,155,34,9,'#243b57','#6f8da8',1);text('PONTOS',43,36,10,'#a7c8de');text(String(score).padStart(4,'0'),174,44,19,'#fff0a5','right');
-  text(`FASE ${levelIndex+1}/${levels.length}`,215,43,14,'#d9efff');text(level.name.toUpperCase(),300,43,12,'#ffffff');
+  text(level.isSublevel?'SUBFASE':`FASE ${levelIndex+1}/${levels.length}`,215,43,14,'#d9efff');text(level.name.toUpperCase(),300,43,12,'#ffffff');
   // 3 heart/life icons
   text('VIDAS',690,43,10,'#b4cbe0');for(let i=0;i<3;i++){drawHeart(739+i*24,42,i<lives,i);}
   const remaining=level.coins.filter(c=>!c.taken).length;text(`${remaining} MOEDAS`,925,43,10,'#c5e7fa','right');
   if(progress.doubleJumpUnlocked) text('SALTO DUPLO ✦',520,43,9,'#9ff7be','left','900');
   // Progress meter
-  roundedRect(20,79,920,6,3,'#152a42aa',null);const levelProgress=clamp((player.x+player.w)/(level.goalX+30),0,1);roundedRect(20,79,920*levelProgress,6,3,'#8bf2aa',null);
+  roundedRect(20,79,920,6,3,'#152a42aa',null);const levelProgress=clamp((player.x+player.w)/((level.isSublevel?level.worldW:level.goalX)+30),0,1);roundedRect(20,79,920*levelProgress,6,3,'#8bf2aa',null);
 }
 function drawHeart(cx,cy,filled,index) {
   const col=filled?'#ff7d91':'#4e5b71';poly([[cx-8,cy-2],[cx-8,cy-6],[cx-4,cy-9],[cx,cy-5],[cx+4,cy-9],[cx+8,cy-6],[cx+8,cy-2],[cx,cy+7]],col,filled?'#632f4c':'#344259',1.5);if(filled){ctx.fillStyle='#ffc6ce';ctx.fillRect(cx-4,cy-6,3,2);}
@@ -563,7 +824,7 @@ function drawMenu(t) {
   drawMenuFrog(145,416+Math.sin(t*2)*2,1.2,t); drawMenuFrog(816,428+Math.sin(t*2+1)*2,.8,t);
   text('UMA AVENTURA NO PÂNTANO PERDIDO',W/2,91,13,'#d9f4ff','center','900');
   text('MUSHYFROG',W/2,139,43,'#a2ffb2','center','900');
-  text('EXPLORE. DESBLOQUEIE HABILIDADES. DERROTE O GUARDIÃO.',W/2,178,11,'#f6fcff','center','800');
+  text('EXPLORE. DESCUBRA SUBFASES. DERROTE 3 CHEFES.',W/2,178,11,'#f6fcff','center','800');
   buttons=[];
   drawButton(344,204,272,42,'JOGAR CAMPANHA',()=>beginCampaign(),'primary');
   drawButton(344,253,272,38,'MAPA DO MUNDO',()=>state='levelselect','secondary');
@@ -600,19 +861,22 @@ function drawInstructions(t) {
   text('A / D ou ← / →',W/2,141,15,'#ffffff','center');text('Mover e explorar as plataformas',W/2,161,11,'#b8cee5','center','700');
   text('ESPAÇO / W / ↑',W/2,199,15,'#ffffff','center');text('Pular; após a 2ª fase, use salto duplo no ar',W/2,220,11,'#b8cee5','center','700');
   text('PLATAFORMAS ESPECIAIS',W/2,258,13,'#ffe5a5','center');text('Rosa = impulsiona • rachada = desmorona • brilhante = móvel',W/2,280,10,'#b8cee5','center','700');
-  text('P / ESC pausa • R reinicia a fase',W/2,315,12,'#ffffff','center');text('Pule sobre inimigos e o Guardião para causar dano.',W/2,340,10,'#b8cee5','center','700');
-  text('Moedas valem +10 pontos. Bandeiras salvam o renascimento.',W/2,365,10,'#ffe6a0','center','700');
+  text('P / ESC pausa • R reinicia a fase',W/2,315,12,'#ffffff','center');text('Pule sobre inimigos e chefes para causar dano.',W/2,340,10,'#b8cee5','center','700');
+  text('Moedas valem +10. Bandeiras salvam. ↓ entra/sai das tubulações.',W/2,365,10,'#ffe6a0','center','700');
   buttons=[];drawButton(360,410,240,38,'VOLTAR AO MENU',()=>state='menu','primary');
 }
 function drawLevelSelect(t) {
   drawMenu(t);drawPanel();roundedRect(72,46,816,450,18,'#142741f5','#81a2c7',2);text('MAPA DO MUNDO',W/2,75,23,'#a4f6b5','center');buttons=[];
-  const cards=[
-    {name:'01 • BOSQUE',desc:'Primeiros saltos',col:'#5cd78b'}, {name:'02 • CAVERNA',desc:'Precisão e movimento',col:'#9bb5e7'}, {name:'03 • NUVENS',desc:'Salto duplo',col:'#ffcf8c'},
-    {name:'04 • PÂNTANO',desc:'Piso instável',col:'#69b889'}, {name:'05 • RUÍNAS',desc:'Rotas antigas',col:'#b4a6d0'}, {name:'06 • GUARDIÃO',desc:'Chefe final',col:'#d777a1'}
-  ];
-  cards.forEach((c,i)=>{const col=i%3,row=Math.floor(i/3),x=94+col*258,y=97+row*173,unlocked=i<=progress.unlockedLevel,completed=progress.completedLevels.includes(i);roundedRect(x,y,244,155,12,unlocked?'#263a58':'#1b273d',unlocked?'#536f94':'#35445c',2);roundedRect(x+12,y+10,220,54,8,c.col);for(let j=0;j<6;j++){ctx.fillStyle='#ffffff26';ctx.fillRect(x+18+j*36,y+19+(j%2)*10,17,4);}if(unlocked)drawMenuFrog(x+122,y+40,.58,t);else{text('🔒',x+122,y+37,20,'#b8c4d7','center');}text(c.name,x+122,y+78,11,unlocked?'#fff':'#8292ac','center');text(c.desc,x+122,y+96,9,'#c5d8ef','center','700');
-    if(unlocked){drawButton(x+20,y+113,204,29,completed?'JOGAR NOVAMENTE':'JOGAR FASE',()=>{score=0;lives=3;deaths=0;runCoins=0;scoreSubmissionHandled=false;loadLevel(i);state='playing';},'primary');if(completed)text('✓ CONCLUÍDA',x+122,y+147,8,'#a6f8b8','center','900');}
-    else {roundedRect(x+20,y+113,204,29,7,'#303d54','#46536a',1);text('BLOQUEADA',x+122,y+127,10,'#8492a9','center','900');}
+  const descriptions=['Primeiros saltos','Cristais e plataformas móveis','Chefe: Senhor das Tempestades','Pisos instáveis e segredos','Ruínas antigas','Chefe: Escavador de Magma','Jardins sob a lua','Cidade submersa','Travessia gelada','Chefe final: Guardião Corrompido'];
+  const colors=['#5cd78b','#9bb5e7','#ffcf8c','#69b889','#b4a6d0','#f18b59','#a5a0e8','#5ac8c5','#bfe7f4','#d777a1'];
+  levels.forEach((lv,i)=>{
+    const col=i%2,row=Math.floor(i/2),x=91+col*394,y=96+row*70,unlocked=i<=progress.unlockedLevel,completed=progress.completedLevels.includes(i);
+    roundedRect(x,y,378,62,9,unlocked?'#263a58':'#1b273d',unlocked?colors[i]:'#35445c',2);
+    roundedRect(x+8,y+8,7,46,3,colors[i]);
+    text(`${String(i+1).padStart(2,'0')} • ${lv.name.toUpperCase()}`,x+24,y+20,10,unlocked?'#fff':'#8292ac','left','900');
+    text(completed?'✓ CONCLUÍDA':descriptions[i],x+24,y+43,9,completed?'#a6f8b8':'#c5d8ef','left','700');
+    if(unlocked)drawButton(x+256,y+17,110,30,completed?'REJOGAR':'JOGAR',()=>{sublevelCache={};score=0;lives=3;deaths=0;runCoins=0;scoreSubmissionHandled=false;loadLevel(i);state='playing';},'primary');
+    else {roundedRect(x+256,y+17,110,30,7,'#303d54','#46536a',1);text('BLOQUEADA',x+311,y+32,9,'#8492a9','center','900');}
   });
   drawButton(360,454,240,30,'VOLTAR AO MENU',()=>state='menu','secondary');
 }
@@ -730,7 +994,7 @@ function render(t) {
       {label:'TENTAR NOVAMENTE',action:()=>restartCampaign(),style:'primary'},
       {label:'MENU PRINCIPAL',action:()=>state='menu'}
     ]);
-    else if(state==='win')drawOverlay('VOCÊ CONSEGUIU!','O pântano foi salvo! A aventura agora é sua lenda.',[
+    else if(state==='win')drawOverlay('VOCÊ CONSEGUIU!','Os três chefes caíram e o pântano foi salvo!',[
       {label:`JOGAR NOVAMENTE • ${score} PONTOS`,action:()=>restartCampaign(),style:'primary'},
       {label:'MENU PRINCIPAL',action:()=>state='menu'}
     ]);
@@ -791,6 +1055,7 @@ touchControls.querySelectorAll('[data-touch]').forEach(button => {
     activeTouchPointers.set(e.pointerId, { key, button });
     touchHeld.add(key);
     if (key === 'Space') justPressed.add('Space');
+    if (key === 'ArrowDown') justPressed.add('ArrowDown');
     button.classList.add('pressed');
     try { button.setPointerCapture(e.pointerId); } catch (_) {}
   });
