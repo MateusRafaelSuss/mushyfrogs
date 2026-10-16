@@ -1,29 +1,32 @@
-SALTO DO SAPINHO — PIXEL QUEST
+MUSHYFROG — PIXEL QUEST
+================================
 
-Como jogar
-1. Abra o arquivo index.html em um navegador moderno (Chrome, Edge ou Firefox).
-2. Clique em JOGAR CAMPANHA ou use Enter.
-3. Mova com A/D ou as setas esquerda/direita.
-4. Pule com Espaço, W ou seta para cima.
-5. P ou Esc pausa/retoma. R reinicia a campanha.
-6. Colete moedas, toque nos checkpoints e alcance a bandeira verde para concluir cada fase.
+COMO EXECUTAR LOCALMENTE
+1. Extraia a pasta do ZIP.
+2. Abra index.html no navegador para jogar no computador ou experimentar os controles de toque em um dispositivo compatível.
+3. Para testar recursos PWA/offline localmente, use um servidor local (por exemplo: python -m http.server) porque service workers exigem HTTPS ou localhost.
 
-O jogo é feito em HTML, CSS e JavaScript puro usando Canvas. Não exige instalação, servidor ou bibliotecas externas.
+CONTROLES NO COMPUTADOR
+- A / D ou setas: mover
+- Espaço, W ou seta para cima: pular
+- P ou Esc: pausar/retomar
+- R: reiniciar a campanha
 
-Fases
-- Bosque Saltitante: introdução aos saltos, espinhos e slimes.
-- Caverna Cristalina: mais perigos e plataformas móveis.
-- Arquipélago das Nuvens: saltos mais longos, plataformas móveis e maior dificuldade.
+CONTROLES NO CELULAR
+- ◀ / ▶: movimentar (é possível manter pressionado)
+- PULAR: saltar; pode ser pressionado ao mesmo tempo que um botão de direção
+- Ⅱ: pausar
+- ⛶: solicitar tela cheia (a disponibilidade depende do navegador)
+- Recomendado jogar com o celular na horizontal.
 
-Regras
-- Cada moeda vale 10 pontos.
-- Você começa com três vidas.
-- Ao tocar em espinhos, slimes ou cair, perde uma vida e retorna ao último checkpoint.
-- Ao terminar as três fases, o jogo exibe sua pontuação final.
+PWA / CLOUDFLARE PAGES
+O projeto inclui manifest.webmanifest, ícones e sw.js para instalação em navegadores compatíveis e cache do jogo para uso offline após o primeiro carregamento bem-sucedido. Publique todos os arquivos mantendo a estrutura das pastas. Cloudflare Pages serve o site em HTTPS, necessário para service workers fora de localhost.
 
-Sprites
-- O sapo usa assets/frog-sprites.png, uma spritesheet PNG transparente com 4 quadros de 32x32 (parado, corrida A, corrida B e pulo).
-- Para trocar a aparência, mantenha os quadros lado a lado nesta ordem e atualize o arquivo PNG.
+ESTRUTURA
+- index.html: jogo e controles
+- assets/: sprites do sapinho
+- icons/: ícones PWA
+- manifest.webmanifest: configurações da instalação
+- sw.js: cache e fallback offline
 
-Checkpoints
-- As bandeiras foram reposicionadas em plataformas sólidas e o código só ativa um checkpoint quando detecta uma plataforma de apoio na altura da bandeira. O renascimento fica centralizado acima dessa plataforma.
+Observação: os navegadores e sistemas operacionais variam quanto à instalação PWA, tela cheia e execução offline. Teste no aparelho-alvo após publicar.
