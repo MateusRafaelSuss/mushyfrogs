@@ -1,11 +1,6 @@
 MUSHYFROG — PIXEL QUEST
 ================================
 
-COMO EXECUTAR
-1. Extraia o ZIP mantendo a estrutura de pastas.
-2. Abra index.html no navegador para jogar no computador.
-3. Para testar PWA/offline localmente, use um servidor local; service workers exigem HTTPS ou localhost.
-
 CONTROLES NO COMPUTADOR
 - A / D ou setas: mover
 - Espaço, W ou seta para cima: pular
