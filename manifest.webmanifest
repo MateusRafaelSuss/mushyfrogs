@@ -2,7 +2,7 @@
   "id": "./",
   "name": "MushyFrog — Pixel Quest",
   "short_name": "MushyFrog",
-  "description": "MushyFrog: uma aventura de plataforma em pixel art com exploração, habilidades, chefes e seis fases.",
+  "description": "MushyFrog: uma aventura de plataforma em pixel art com exploração, habilidades, três chefes, subfases e dez fases.",
   "lang": "pt-BR",
   "start_url": "./index.html",
   "scope": "./",
